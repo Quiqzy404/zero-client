@@ -1,0 +1,22 @@
+﻿# build / tooling
+.gradle/
+build/
+run/
+out/
+bin/
+*.log
+.idea/
+*.iml
+.vscode/
+
+# nested config-server clone (separate repo, do not commit)
+/server/
+
+# build artifacts & binaries (shipped via dist, not source)
+/FERTIG/
+*.jar
+*.exe
+*.update
+
+# keep the gradle wrapper jar (needed to build)
+!gradle/wrapper/gradle-wrapper.jar

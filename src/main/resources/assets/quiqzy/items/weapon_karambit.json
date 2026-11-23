@@ -1,0 +1,10 @@
+{
+ "model": {
+  "type": "minecraft:special",
+  "base": "quiqzy:item/weapon_karambit",
+  "model": {
+   "type": "quiqzy:mesh",
+   "mesh": "karambit"
+  }
+ }
+}
