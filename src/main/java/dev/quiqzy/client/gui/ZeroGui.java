@@ -423,6 +423,7 @@ public final class ZeroGui extends Screen {
          case PLAYER -> '\ue19f';
          case WORLD -> '\ue0eb';
          case MISC -> '\ue0ba';
+         case TIERSMC -> '\ue115';
       };
    }
 

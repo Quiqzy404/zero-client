@@ -206,6 +206,7 @@ public final class AuroraGui extends Screen {
 			case PLAYER -> ZeroFont.Icon.USER;
 			case WORLD -> ZeroFont.Icon.GLOBE;
 			case MISC -> ZeroFont.Icon.SLIDERS;
+			case TIERSMC -> ZeroFont.Icon.MAP_PIN;
 		};
 	}
 

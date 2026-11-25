@@ -46,6 +46,7 @@ public final class QuiqzyClient implements ClientModInitializer {
    public void onInitializeClient() {
       dev.quiqzy.client.update.ZeroUpdater.checkAsync();
       dev.quiqzy.client.render.MarkerRelay.start();
+      dev.quiqzy.client.render.ServerBaseNet.register();
       ZeroPipelines.init();
       // Echte 3D-Item-Meshes (z.B. Karambit) als eigener Special-Renderer-Typ
       dev.quiqzy.client.mixin.SpecialModelRenderersAccessor.zero$idMapper()
@@ -117,6 +118,7 @@ public final class QuiqzyClient implements ClientModInitializer {
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(SusChunkRenderer::render);
       dev.quiqzy.client.render.MarkerRenderer.init();
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.MarkerRenderer::render);
+      WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.TiersMcRenderer::render);
       SoundChunkRenderer.init();
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(SoundChunkRenderer::render);
       SpawnerRenderer.init();

@@ -102,7 +102,8 @@ public abstract class Module {
 		HUD("HUD", "▦"),
 		PLAYER("Player", "☺"),
 		WORLD("World", "◈"),
-		MISC("Misc", "≡");
+		MISC("Misc", "≡"),
+		TIERSMC("TiersMC", "◆");
 
 		public final String label;
 		public final String icon;

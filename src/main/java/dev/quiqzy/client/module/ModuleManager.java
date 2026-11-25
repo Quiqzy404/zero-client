@@ -238,6 +238,9 @@ public final class ModuleManager {
    public static final ArmorHudModule ARMOR_HUD = register(new ArmorHudModule());
    public static final PotionHudModule POTION_HUD = register(new PotionHudModule());
    public static final SusChunkModule SUS_CHUNK = register(new SusChunkModule());
+   public static final dev.quiqzy.client.module.tiersmc.DLChunkFinderModule DL_CHUNK_FINDER = register(new dev.quiqzy.client.module.tiersmc.DLChunkFinderModule());
+   public static final dev.quiqzy.client.module.tiersmc.DLSusFinderModule DL_SUS_FINDER = register(new dev.quiqzy.client.module.tiersmc.DLSusFinderModule());
+   public static final dev.quiqzy.client.module.tiersmc.DLActivityInspectorModule DL_ACTIVITY = register(new dev.quiqzy.client.module.tiersmc.DLActivityInspectorModule());
    public static final SoundChunkModule SOUND_CHUNK = register(new SoundChunkModule());
    public static final BlockEspModule BLOCK_ESP = register(new BlockEspModule());
    public static final WaypointsModule WAYPOINTS = register(new WaypointsModule());
