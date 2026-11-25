@@ -72,8 +72,8 @@ public final class BlockEspRenderer {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null) return;
 
-		var all = module.hits();
-		if (all.isEmpty()) return;
+		BlockEspModule.Snapshot snap = module.snapshot();
+		if (snap.hits().isEmpty()) return;
 
 		Vec3 cam = context.worldState().cameraRenderState.pos;
 		PoseStack matrices = context.matrices();
@@ -81,57 +81,124 @@ public final class BlockEspRenderer {
 		matrices.translate(-cam.x, -cam.y, -cam.z);
 		Matrix4f m = matrices.last().pose();
 
-		if (module.throughWalls.on()) {
-			BufferBuilder buffer = new BufferBuilder(ALLOCATOR, THROUGH_WALLS.getVertexFormatMode(), THROUGH_WALLS.getVertexFormat());
-			int boxes = emit(buffer, m, module, all);
-			matrices.popPose();
-			if (boxes > 0) drawThroughWalls(mc, buffer);
-			else buffer.build();
-		} else {
-			VertexConsumer buffer = context.consumers().getBuffer(RenderTypes.debugFilledBox());
-			emit(buffer, m, module, all);
-			matrices.popPose();
+		BufferBuilder walls = new BufferBuilder(ALLOCATOR, THROUGH_WALLS.getVertexFormatMode(), THROUGH_WALLS.getVertexFormat());
+		int wallQuads = 0;
+		VertexConsumer faces = module.throughWalls.on() ? walls : context.consumers().getBuffer(RenderTypes.debugFilledBox());
+		int n = emitFaces(faces, m, module, snap, cam);
+		if (module.throughWalls.on()) wallQuads += n;
+
+		boolean tracers = module.tracers.on() || (ModuleManager.TRACERS.isEnabled() && ModuleManager.TRACERS.blocks.on());
+		if (tracers) wallQuads += emitTracers(walls, m, mc, module, snap, cam);
+
+		matrices.popPose();
+		if (wallQuads > 0) drawThroughWalls(mc, walls);
+		else {
+			MeshData unused = walls.build();
+			if (unused != null) unused.close();
 		}
 	}
 
-	private static int emit(VertexConsumer b, Matrix4f m, BlockEspModule module, Iterable<List<Hit>> all) {
-		int count = 0;
-		boolean outline = module.outline.on();
-		float fillA = module.fillOpacity.get() / 100f;
-		float lineA = module.lineOpacity.get() / 100f;
-		float e = module.lineWidth.get() * 0.01f;
-		for (List<Hit> list : all) {
-			for (Hit hit : list) {
-				if (count >= MAX_BOXES) return count;
-				BlockPos p = hit.pos();
-				int rgb = module.drawColor(hit, count);
-				float r = ((rgb >> 16) & 0xFF) / 255f;
-				float g = ((rgb >> 8) & 0xFF) / 255f;
-				float bl = (rgb & 0xFF) / 255f;
-
-				float x0 = p.getX() + 0.01f, y0 = p.getY() + 0.01f, z0 = p.getZ() + 0.01f;
-				float x1 = p.getX() + 0.99f, y1 = p.getY() + 0.99f, z1 = p.getZ() + 0.99f;
-				if (fillA > 0) box(b, m, x0, y0, z0, x1, y1, z1, ARGB.colorFromFloat(fillA, r, g, bl));
-				if (outline && lineA > 0) edges(b, m, x0, y0, z0, x1, y1, z1, e, ARGB.colorFromFloat(lineA, r, g, bl));
-				count++;
-			}
+	/**
+	 * Nur Farbe, keine Outline: pro Block werden nur die Seiten gezeichnet, an denen KEIN gleichfarbiger
+	 * Treffer liegt -> eine Ader ist eine saubere Form ohne innere Linien. Nächste Blöcke zuerst (Limit).
+	 */
+	private static int emitFaces(VertexConsumer b, Matrix4f m, BlockEspModule module, BlockEspModule.Snapshot snap, Vec3 cam) {
+		List<Hit> hits = snap.hits();
+		Integer[] order = new Integer[hits.size()];
+		for (int i = 0; i < order.length; i++) order[i] = i;
+		if (order.length > MAX_BOXES) {
+			double[] d = new double[order.length];
+			for (int i = 0; i < d.length; i++) d[i] = hits.get(i).pos().distToCenterSqr(cam);
+			java.util.Arrays.sort(order, (x, y) -> Double.compare(d[x], d[y]));
 		}
-		return count;
+		float alpha = module.fillOpacity.get() / 100f;
+		var rgbAt = snap.rgbAt();
+		int quads = 0;
+		final float o = 0.002f; // minimal nach außen, damit es nicht mit der Blockfläche flimmert
+		for (int k = 0; k < order.length && k < MAX_BOXES; k++) {
+			int i = order[k];
+			Hit hit = hits.get(i);
+			BlockPos p = hit.pos();
+			int rgb = hit.rgb();
+			int c = ARGB.color(Math.round(alpha * 255f), module.drawColor(hit, snap.veinOf()[i]));
+			int x = p.getX(), y = p.getY(), z = p.getZ();
+			float x0 = x - o, y0 = y - o, z0 = z - o, x1 = x + 1 + o, y1 = y + 1 + o, z1 = z + 1 + o;
+			if (!same(rgbAt, x, y + 1, z, rgb)) { quad(b, m, x0, y1, z1, x1, y1, z1, x1, y1, z0, x0, y1, z0, c); quads++; }
+			if (!same(rgbAt, x, y - 1, z, rgb)) { quad(b, m, x0, y0, z0, x1, y0, z0, x1, y0, z1, x0, y0, z1, c); quads++; }
+			if (!same(rgbAt, x, y, z + 1, rgb)) { quad(b, m, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1, c); quads++; }
+			if (!same(rgbAt, x, y, z - 1, rgb)) { quad(b, m, x1, y0, z0, x0, y0, z0, x0, y1, z0, x1, y1, z0, c); quads++; }
+			if (!same(rgbAt, x - 1, y, z, rgb)) { quad(b, m, x0, y0, z0, x0, y0, z1, x0, y1, z1, x0, y1, z0, c); quads++; }
+			if (!same(rgbAt, x + 1, y, z, rgb)) { quad(b, m, x1, y0, z1, x1, y0, z0, x1, y1, z0, x1, y1, z1, c); quads++; }
+		}
+		return quads;
 	}
 
-	private static void edges(VertexConsumer b, Matrix4f m, float x0, float y0, float z0, float x1, float y1, float z1, float e, int c) {
-		box(b, m, x0, y0, z0, x1, y0 + e, z0 + e, c);
-		box(b, m, x0, y0, z1 - e, x1, y0 + e, z1, c);
-		box(b, m, x0, y0, z0, x0 + e, y0 + e, z1, c);
-		box(b, m, x1 - e, y0, z0, x1, y0 + e, z1, c);
-		box(b, m, x0, y1 - e, z0, x1, y1, z0 + e, c);
-		box(b, m, x0, y1 - e, z1 - e, x1, y1, z1, c);
-		box(b, m, x0, y1 - e, z0, x0 + e, y1, z1, c);
-		box(b, m, x1 - e, y1 - e, z0, x1, y1, z1, c);
-		box(b, m, x0, y0, z0, x0 + e, y1, z0 + e, c);
-		box(b, m, x1 - e, y0, z0, x1, y1, z0 + e, c);
-		box(b, m, x0, y0, z1 - e, x0 + e, y1, z1, c);
-		box(b, m, x1 - e, y0, z1 - e, x1, y1, z1, c);
+	private static boolean same(java.util.Map<Long, Integer> rgbAt, int x, int y, int z, int rgb) {
+		Integer c = rgbAt.get(BlockPos.asLong(x, y, z));
+		return c != null && c == rgb;
+	}
+
+	/**
+	 * Ein Tracer pro Ader (zur Ader-Mitte), die nächsten zuerst bis zum Limit -> kein Linien-Wirrwarr,
+	 * und jede nahe Ader bekommt sicher einen. Die Linie blendet vom Fadenkreuz aus ein (kein Stern in der Mitte).
+	 */
+	private static int emitTracers(VertexConsumer b, Matrix4f m, Minecraft mc, BlockEspModule module, BlockEspModule.Snapshot snap, Vec3 cam) {
+		List<BlockEspModule.Vein> veins = new java.util.ArrayList<>(snap.veins());
+		veins.sort(java.util.Comparator.comparingDouble(v -> cam.distanceToSqr(v.x(), v.y(), v.z())));
+		float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+		Vec3 start = EspRenderer.tracerStart(mc, ModuleManager.TRACERS, cam, pt);
+		Vec3 fwd = EspRenderer.camForward(mc);
+		double width = ModuleManager.TRACERS.width.get() * 0.0005;
+		float alpha = module.tracerOpacity.get() / 100f;
+		int limit = module.tracerLimit.get(), quads = 0;
+		for (int i = 0; i < veins.size() && i < limit; i++) {
+			BlockEspModule.Vein v = veins.get(i);
+			int rgb = module.drawColor(new Hit(BlockPos.ZERO, v.rgb()), v.index()) & 0xFFFFFF;
+			quads += fadeLine(b, m, cam, fwd, start, new Vec3(v.x(), v.y(), v.z()), width, rgb, alpha);
+		}
+		return quads;
+	}
+
+	/** Dünne Linie mit konstanter Bildschirmbreite, Alpha von 0 (Start) bis alpha (Ziel). */
+	private static int fadeLine(VertexConsumer buf, Matrix4f m, Vec3 cam, Vec3 fwd, Vec3 a, Vec3 b, double halfAngle, int rgb, float alpha) {
+		double near = 0.05;
+		double d0 = a.subtract(cam).dot(fwd), d1 = b.subtract(cam).dot(fwd);
+		if (d0 < near && d1 < near) return 0;
+		float fa = 0f, fb = 1f;
+		if (d0 < near) {
+			double t = (near - d0) / (d1 - d0);
+			a = a.lerp(b, t);
+			fa = (float) t;
+		} else if (d1 < near) {
+			double t = (near - d1) / (d0 - d1);
+			b = b.lerp(a, t);
+			fb = (float) (1 - t);
+		}
+		Vec3 dir = b.subtract(a);
+		if (dir.lengthSqr() < 1e-8) return 0;
+		Vec3 sideA = EspRenderer.side(dir, a.subtract(cam)), sideB = EspRenderer.side(dir, b.subtract(cam));
+		if (sideA == null || sideB == null) return 0;
+		if (sideA.dot(sideB) < 0) sideB = sideB.scale(-1);
+		double halfA = Math.max(0.0005, a.distanceTo(cam) * halfAngle), halfB = Math.max(0.0005, b.distanceTo(cam) * halfAngle);
+		Vec3 a1 = a.add(sideA.scale(halfA)), a2 = a.subtract(sideA.scale(halfA));
+		Vec3 b1 = b.add(sideB.scale(halfB)), b2 = b.subtract(sideB.scale(halfB));
+		int ca = ARGB.color(Math.round(alpha * fa * fa * 255f), rgb); // quadratisch: Start bleibt lange durchsichtig
+		int cb = ARGB.color(Math.round(alpha * fb * 255f), rgb);
+		v(buf, m, a1, ca); v(buf, m, a2, ca); v(buf, m, b2, cb); v(buf, m, b1, cb);
+		v(buf, m, b1, cb); v(buf, m, b2, cb); v(buf, m, a2, ca); v(buf, m, a1, ca);
+		return 2;
+	}
+
+	private static void v(VertexConsumer b, Matrix4f m, Vec3 p, int c) {
+		b.addVertex(m, (float) p.x, (float) p.y, (float) p.z).setColor(c);
+	}
+
+	private static void quad(VertexConsumer b, Matrix4f m, float ax, float ay, float az, float bx, float by, float bz,
+			float cx, float cy, float cz, float dx, float dy, float dz, int c) {
+		b.addVertex(m, ax, ay, az).setColor(c);
+		b.addVertex(m, bx, by, bz).setColor(c);
+		b.addVertex(m, cx, cy, cz).setColor(c);
+		b.addVertex(m, dx, dy, dz).setColor(c);
 	}
 
 	private static void box(VertexConsumer b, Matrix4f m, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, int c) {

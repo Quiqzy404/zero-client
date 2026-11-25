@@ -692,6 +692,70 @@ public final class AuroraGui extends Screen {
 		return x;
 	}
 
+	/** Block ESP: per Rechtsklick gewählter Block -> eigene Farbe (Farbverlauf + feste Farben + Reset). */
+	private String colorTarget;
+
+	private float blockColorPanel(GuiGraphics g, String id, Entry en, float x1, float y, float x2, boolean inView, float al) {
+		var esp = ModuleManager.BLOCK_ESP;
+		int cur = esp.colorFor(id);
+		float h = 66f;
+		ZeroRender.rect(g, x1, y, x2, y + h, 9f, a(0xFFFFFFFF, 0.06f * al));
+		if (en != null) item(g, en.stack(), x1 + 8f, y + 6f, 16f);
+		String nm = en != null ? en.name() : id;
+		ZeroRender.text(g, ZeroFont.BOLD, nm, x1 + 30f, y + 7f, 7f, a(text(), al));
+		ZeroRender.noTint = true;
+		ZeroRender.rect(g, x1 + 30f + w(ZeroFont.BOLD, nm, 7f) + 8f, y + 7f, x1 + 30f + w(ZeroFont.BOLD, nm, 7f) + 22f, y + 16f, 3f, a(0xFF000000 | cur, al));
+		ZeroRender.noTint = false;
+		// Reset / Fertig
+		boolean custom = esp.blockColors.color(id) != null;
+		float bx = x2 - 8f;
+		ZeroRender.icon(g, ZeroFont.Icon.X, bx - 6f, y + 11.5f, 7f, a(muted(), al));
+		if (inView) click(bx - 13f, y + 4f, bx + 1f, y + 19f, () -> { colorTarget = null; UiSounds.click(); });
+		bx -= 22f;
+		if (custom) {
+			float rw = w(ZeroFont.REGULAR, "Reset", 6.2f);
+			ZeroRender.text(g, ZeroFont.REGULAR, "Reset", bx - rw, y + 8f, 6.2f, a(muted(), al));
+			if (inView) click(bx - rw - 4f, y + 4f, bx + 4f, y + 19f, () -> {
+				esp.blockColors.remove(id);
+				QuiqzyConfig.save();
+				UiSounds.click();
+			});
+		}
+		// Farbverlauf (Klick = Farbton)
+		float hy = y + 26f, hx1 = x1 + 8f, hx2 = x2 - 8f;
+		int segs = 48;
+		ZeroRender.noTint = true;
+		for (int k = 0; k < segs; k++) {
+			float sx1 = hx1 + (hx2 - hx1) * k / segs, sx2 = hx1 + (hx2 - hx1) * (k + 1) / segs + 0.5f;
+			ZeroRender.rect(g, sx1, hy, sx2, hy + 12f, 0f, a(0xFF000000 | net.minecraft.util.Mth.hsvToRgb(k / (float) segs, 0.78f, 1f), al));
+		}
+		ZeroRender.noTint = false;
+		if (inView) click(hx1, hy, hx2, hy + 12f, () -> {
+			float t = Math.max(0f, Math.min(0.999f, (mx - hx1) / (hx2 - hx1)));
+			esp.blockColors.put(id, net.minecraft.util.Mth.hsvToRgb(t, 0.78f, 1f) & 0xFFFFFF);
+			QuiqzyConfig.save();
+			UiSounds.click();
+		});
+		// feste Farben
+		int[] sw = {0xFFFFFF, 0xB8BCC6, 0x5B6070, 0xFF3B30, 0xFF8A1F, 0xFFD23D, 0x7CFF4D, 0x2EE59D, 0x4DE8FF, 0x3B82F6, 0x8B5CF6, 0xF472B6};
+		float cx = x1 + 14f, cy = y + 52f;
+		ZeroRender.noTint = true;
+		for (int rgb : sw) {
+			boolean selc = cur == rgb;
+			if (selc) ZeroRender.circle(g, cx, cy, 6f, a(0xFFFFFFFF, al));
+			ZeroRender.circle(g, cx, cy, 4.6f, a(0xFF000000 | rgb, al));
+			final int c = rgb;
+			if (inView) click(cx - 6f, cy - 6f, cx + 6f, cy + 6f, () -> {
+				esp.blockColors.put(id, c);
+				QuiqzyConfig.save();
+				UiSounds.click();
+			});
+			cx += 15f;
+		}
+		ZeroRender.noTint = false;
+		return y + h;
+	}
+
 	/** Editor-Inhalt unter dem Modul-Kopf. */
 	private void listPage(GuiGraphics g, Module m, Setting<?> s, float x1, float top, float x2, float bottom, float al) {
 		boolean blocks = s instanceof Setting.Blocks, items = s instanceof Setting.Items;
@@ -740,15 +804,34 @@ public final class AuroraGui extends Screen {
 				boolean hv = inView && hot(tx, ty, tx + tile, ty + tile);
 				ZeroRender.rect(g, tx, ty, tx + tile, ty + tile, 7f, a(0xFFFFFFFF, (hv ? 0.20f : 0.12f) * al));
 				if (en != null) item(g, en.stack(), tx + 5f, ty + 5f, 16f);
+				boolean espColors = blocks && s == ModuleManager.BLOCK_ESP.blocks;
+				if (espColors) {
+					// Farbpunkt unten rechts = aktuelle ESP-Farbe dieses Blocks
+					ZeroRender.noTint = true;
+					ZeroRender.circle(g, tx + tile - 5f, ty + tile - 5f, 3.6f, a(0xFF101114, al));
+					ZeroRender.circle(g, tx + tile - 5f, ty + tile - 5f, 2.7f, a(0xFF000000 | ModuleManager.BLOCK_ESP.colorFor(id), al));
+					ZeroRender.noTint = false;
+					if (id.equals(colorTarget)) ZeroRender.stroke(g, tx, ty, tx + tile, ty + tile, 7f, 1f, a(0xFFFFFFFF, 0.8f * al));
+				}
 				if (hv) {
 					ZeroRender.rect(g, tx, ty, tx + tile, ty + tile, 7f, a(0xFF000000, 0.45f * al));
 					ZeroRender.icon(g, ZeroFont.Icon.X, tx + tile / 2f, ty + tile / 2f, 9f, a(text(), al));
+					if (espColors) {
+						String tip = "Right-click: color";
+						float tw = w(ZeroFont.REGULAR, tip, 5.8f) + 12f, tipx = Math.min(tx, gx2 - tw);
+						ZeroRender.rect(g, tipx, ty - 14f, tipx + tw, ty - 2f, 6f, a(0xF0202125, al));
+						ZeroRender.text(g, ZeroFont.REGULAR, tip, tipx + 6f, ty - 11f, 5.8f, a(text(), al));
+					}
 				}
 				if (inView) click(tx, ty, tx + tile, ty + tile, () -> {
 					if (blocks) ((Setting.Blocks) s).remove(id); else ((Setting.Items) s).remove(id);
+					if (id.equals(colorTarget)) colorTarget = null;
 					QuiqzyConfig.save();
 					UiSounds.removed();
-				});
+				}, espColors ? () -> {
+					colorTarget = id.equals(colorTarget) ? null : id;
+					UiSounds.click();
+				} : null);
 				i++;
 			}
 			if (sel.isEmpty()) {
@@ -756,6 +839,11 @@ public final class AuroraGui extends Screen {
 				y += 16f;
 			} else {
 				y += ((sel.size() + cols - 1) / cols) * (tile + gap) + 4f;
+			}
+			if (blocks && s == ModuleManager.BLOCK_ESP.blocks && colorTarget != null && sel.contains(colorTarget)) {
+				Entry ce = null;
+				for (Entry e2 : all) if (e2.id().equals(colorTarget)) { ce = e2; break; }
+				y = blockColorPanel(g, colorTarget, ce, gx1, y + 2f, gx2, inView, al) + 6f;
 			}
 			// Hinzufügen
 			String q = listQuery.trim().toLowerCase(Locale.ROOT);

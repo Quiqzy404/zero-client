@@ -55,14 +55,14 @@ public final class BlockEspModule extends Module {
 	public final Setting.Int radius = add(new Setting.Int("radius", "Radius", 6, 1, 16, " Ch"));
 	public final Setting.Bool throughWalls = add(new Setting.Bool("through_walls", "Through Blocks", true));
 	public final Setting.Bool tracers = add(new Setting.Bool("tracers", "Tracers", false));
-	public final Setting.Bool outline = add(new Setting.Bool("outline", "Outline", true));
+	/** Max. Tracer (je Ader einer, die nächsten zuerst). */
+	public final Setting.Int tracerLimit = add(new Setting.Int("tracer_limit", "Tracer Limit", 25, 1, 100));
+	public final Setting.Int tracerOpacity = add(new Setting.Int("tracer_opacity", "Tracer Opacity", 75, 10, 100, " %"));
 
-	// Aussehen
+	// Aussehen: nur Farbe (keine Outline). Zusammenhängende Blöcke werden als eine Form gezeichnet.
 	public final Setting.Choice colorMode = add(new Setting.Choice("color_mode", "Color Mode", "Per Block", "Per Block", "Single Color", "Rainbow"));
 	public final Setting.Color singleColor = add(new Setting.Color("single_color", "Single Color", 0x4DE8FF));
-	public final Setting.Int fillOpacity = add(new Setting.Int("fill_opacity", "Fill Opacity", 22, 0, 100, " %"));
-	public final Setting.Int lineOpacity = add(new Setting.Int("line_opacity", "Outline Opacity", 90, 0, 100, " %"));
-	public final Setting.Int lineWidth = add(new Setting.Int("line_width", "Outline Width", 3, 1, 10));
+	public final Setting.Int fillOpacity = add(new Setting.Int("opacity", "Opacity", 40, 5, 100, " %"));
 
 	/** Farbe, mit der ein Treffer gezeichnet wird (Color Mode beachtet). */
 	public int drawColor(Hit hit, int index) {
@@ -76,6 +76,23 @@ public final class BlockEspModule extends Module {
 	/** Ein gefundener Block mit seiner Farbe (ARGB ohne Alpha, 0xRRGGBB). */
 	public record Hit(BlockPos pos, int rgb) {
 	}
+
+	/** Eine Ader = zusammenhängende Blöcke gleicher Farbe (auch diagonal). Bekommt genau einen Tracer. */
+	public record Vein(double x, double y, double z, int rgb, int size, int index) {
+	}
+
+	/**
+	 * Fertiger Stand für den Renderer (wird nur neu gebaut, wenn sich Treffer ändern):
+	 * alle Treffer, Farbe je Position (für "Fläche nur zeichnen, wenn kein gleichfarbiger Nachbar"),
+	 * Ader-Index je Treffer und die Adern.
+	 */
+	public record Snapshot(List<Hit> hits, Map<Long, Integer> rgbAt, int[] veinOf, List<Vein> veins) {
+		static final Snapshot EMPTY = new Snapshot(List.of(), Map.of(), new int[0], List.of());
+	}
+
+	private volatile Snapshot snapshot = Snapshot.EMPTY;
+	private int resultsVersion;
+	private int snapVersion = -1;
 
 	private final Map<Long, List<Hit>> results = new HashMap<>();
 	private final ArrayDeque<Long> queue = new ArrayDeque<>();
@@ -108,6 +125,7 @@ public final class BlockEspModule extends Module {
 
 	private void reset() {
 		results.clear();
+		resultsVersion++;
 		queue.clear();
 		queued.clear();
 		lastLevel = null;
@@ -123,7 +141,7 @@ public final class BlockEspModule extends Module {
 
 	public void onChunkUnload(ClientLevel level, LevelChunk chunk) {
 		long key = chunk.getPos().toLong();
-		results.remove(key);
+		if (results.remove(key) != null) resultsVersion++;
 		queued.remove(key);
 	}
 
@@ -180,6 +198,7 @@ public final class BlockEspModule extends Module {
 		// Welt gewechselt oder Auswahl/Radius geändert -> alles neu
 		if (level != lastLevel || mask != lastMask || r != lastRadius) {
 			results.clear();
+			resultsVersion++;
 			queue.clear();
 			queued.clear();
 			lastLevel = level;
@@ -215,7 +234,53 @@ public final class BlockEspModule extends Module {
 			budget--;
 		}
 
-		results.keySet().removeIf(key -> Math.abs(ChunkPos.getX(key) - center.x) > r || Math.abs(ChunkPos.getZ(key) - center.z) > r);
+		if (results.keySet().removeIf(key -> Math.abs(ChunkPos.getX(key) - center.x) > r || Math.abs(ChunkPos.getZ(key) - center.z) > r)) resultsVersion++;
+		if (snapVersion != resultsVersion) {
+			snapVersion = resultsVersion;
+			snapshot = buildSnapshot();
+		}
+	}
+
+	/** Baut Treffer-Liste, Positions-Farben und Adern (Flood-Fill über 26 Nachbarn, gleiche Farbe). */
+	private Snapshot buildSnapshot() {
+		List<Hit> all = new ArrayList<>();
+		for (List<Hit> l : results.values()) all.addAll(l);
+		if (all.isEmpty()) return Snapshot.EMPTY;
+		Map<Long, Integer> rgbAt = new HashMap<>(all.size() * 2);
+		Map<Long, Integer> idxAt = new HashMap<>(all.size() * 2);
+		for (int i = 0; i < all.size(); i++) {
+			long k = all.get(i).pos().asLong();
+			rgbAt.put(k, all.get(i).rgb());
+			idxAt.put(k, i);
+		}
+		int[] veinOf = new int[all.size()];
+		java.util.Arrays.fill(veinOf, -1);
+		List<Vein> veins = new ArrayList<>();
+		ArrayDeque<Integer> stack = new ArrayDeque<>();
+		for (int i = 0; i < all.size(); i++) {
+			if (veinOf[i] >= 0) continue;
+			int v = veins.size(), rgb = all.get(i).rgb(), size = 0;
+			double sx = 0, sy = 0, sz = 0;
+			veinOf[i] = v;
+			stack.push(i);
+			while (!stack.isEmpty()) {
+				int j = stack.pop();
+				BlockPos p = all.get(j).pos();
+				sx += p.getX() + 0.5;
+				sy += p.getY() + 0.5;
+				sz += p.getZ() + 0.5;
+				size++;
+				for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+					if (dx == 0 && dy == 0 && dz == 0) continue;
+					Integer n = idxAt.get(BlockPos.asLong(p.getX() + dx, p.getY() + dy, p.getZ() + dz));
+					if (n == null || veinOf[n] >= 0 || all.get(n).rgb() != rgb) continue;
+					veinOf[n] = v;
+					stack.push(n);
+				}
+			}
+			veins.add(new Vein(sx / size, sy / size, sz / size, rgb, size, v));
+		}
+		return new Snapshot(all, rgbAt, veinOf, veins);
 	}
 
 	private void enqueueAllInRange(ClientLevel level, LocalPlayer player) {
@@ -243,7 +308,7 @@ public final class BlockEspModule extends Module {
 		ChunkPos pos = chunk.getPos();
 		long key = pos.toLong();
 		if (lastMask == 0) {
-			results.remove(key);
+			if (results.remove(key) != null) resultsVersion++;
 			return;
 		}
 
@@ -272,8 +337,12 @@ public final class BlockEspModule extends Module {
 			}
 		}
 
-		if (hits.isEmpty()) results.remove(key);
-		else results.put(key, Collections.unmodifiableList(hits));
+		if (hits.isEmpty()) {
+			if (results.remove(key) != null) resultsVersion++;
+		} else {
+			List<Hit> prev = results.put(key, Collections.unmodifiableList(hits));
+			if (!hits.equals(prev)) resultsVersion++;
+		}
 	}
 
 	/** Farbe für einen Block, 0 = nicht markieren. */
@@ -329,6 +398,7 @@ public final class BlockEspModule extends Module {
 		if (c != 0 && list.size() < MAX_PER_CHUNK) list.add(new Hit(pos.immutable(), c));
 		if (list.isEmpty()) results.remove(key);
 		else results.put(key, Collections.unmodifiableList(list));
+		resultsVersion++;
 	}
 
 	/** Feste, passende Farben für Blöcke (z. B. Ender Chest violett, Chest orange), sonst individueller Farb-Hash. */
@@ -408,5 +478,9 @@ public final class BlockEspModule extends Module {
 
 	public Collection<List<Hit>> hits() {
 		return results.values();
+	}
+
+	public Snapshot snapshot() {
+		return snapshot;
 	}
 }

@@ -121,11 +121,9 @@ public final class EspRenderer {
 
 		// ---------- Tracers (immer durch Wände) – eigenes Modul + Schalter in Entity ESP / 2D ESP / Block ESP
 		var esp2d = ModuleManager.ESP_2D;
-		BlockEspModule blockEsp = ModuleManager.BLOCK_ESP;
 		boolean espTr = esp.isEnabled() && esp.tracers.on();
 		boolean e2dTr = esp2d.isEnabled() && esp2d.tracers.on();
-		boolean blkTr = blockEsp.isEnabled() && (blockEsp.tracers.on() || (tracers.isEnabled() && tracers.blocks.on()));
-		if (tracers.isEnabled() || espTr || e2dTr || blkTr) {
+		if (tracers.isEnabled() || espTr || e2dTr) {
 			Vec3 start = tracerStart(mc, tracers, cam, pt);
 			Vec3 fwd = camForward(mc);
 			float alpha = tracers.opacity.get() / 100f;
@@ -150,20 +148,6 @@ public final class EspRenderer {
 				line(walls, m, cam, fwd, start, new Vec3(cx, y, cz), width, color(alpha, rgb));
 				wallCount++;
 				n++;
-			}
-			if (blkTr) {
-				outer:
-				for (List<BlockEspModule.Hit> list : blockEsp.hits()) {
-					for (BlockEspModule.Hit hit : list) {
-						if (n >= MAX_TRACERS) break outer;
-						BlockPos p = hit.pos();
-						Vec3 endPos = new Vec3(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
-						int rgb = tracers.isEnabled() ? tracers.blockColorFor(hit.rgb(), endPos.distanceTo(cam), n) : hit.rgb();
-						line(walls, m, cam, fwd, start, endPos, width, color(alpha * 0.85f, rgb));
-						wallCount++;
-						n++;
-					}
-				}
 			}
 		}
 
@@ -208,7 +192,7 @@ public final class EspRenderer {
 	 * Startpunkt der Tracer. Body/Eyes/Feet sind echte Punkte an deinem Spieler (3D – in F5 und Freecam sieht man die
 	 * Linien aus dir herauskommen). Crosshair/Bottom liegen vor der echten Kamera (auch richtig in Freecam).
 	 */
-		private static Vec3 tracerStart(Minecraft mc, TracersModule t, Vec3 cam, float pt) {
+	public static Vec3 tracerStart(Minecraft mc, TracersModule t, Vec3 cam, float pt) {
 		Vec3 look = camForward(mc);
 		double px = mc.player.getX(pt);
 		double py = mc.player.getY(pt);
@@ -240,7 +224,7 @@ public final class EspRenderer {
 	}
 
 	/** Blickrichtung der echten Kamera (auch in F5/Freecam korrekt). */
-	private static Vec3 camForward(Minecraft mc) {
+	public static Vec3 camForward(Minecraft mc) {
 		var camera = mc.gameRenderer.getMainCamera();
 		double yaw = Math.toRadians(camera.yRot());
 		double pitch = Math.toRadians(camera.xRot());
@@ -287,7 +271,7 @@ private static AABB lerpedBox(Entity e, float pt) {
 		quad(buf, m, b1, b2, a2, a1, c);
 	}
 
-	private static Vec3 side(Vec3 dir, Vec3 toPoint) {
+	static Vec3 side(Vec3 dir, Vec3 toPoint) {
 		Vec3 sd = dir.cross(toPoint);
 		if (sd.lengthSqr() < 1e-12) sd = dir.cross(new Vec3(0, 1, 0));
 		if (sd.lengthSqr() < 1e-12) sd = dir.cross(new Vec3(1, 0, 0));
