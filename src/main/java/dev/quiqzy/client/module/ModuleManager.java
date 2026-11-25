@@ -2,6 +2,8 @@ package dev.quiqzy.client.module;
 
 import dev.quiqzy.client.config.QuiqzyConfig;
 import dev.quiqzy.client.module.combat.AnchorModule;
+import dev.quiqzy.client.module.combat.AutoBackstepModule;
+import dev.quiqzy.client.module.combat.HitFlickModule;
 import dev.quiqzy.client.module.combat.AutoElyMaceModule;
 import dev.quiqzy.client.module.combat.InstantLaunchModule;
 import dev.quiqzy.client.module.combat.StunSlamModule;
@@ -131,6 +133,8 @@ public final class ModuleManager {
    }
 
    public static final StunSlamModule STUN_SLAM = register(new StunSlamModule());
+   public static final HitFlickModule HIT_FLICK = register(new HitFlickModule());
+   public static final AutoBackstepModule AUTO_BACKSTEP = register(new AutoBackstepModule());
    public static final InstantLaunchModule INSTANT_LAUNCH = register(new InstantLaunchModule());
    public static final AnchorModule ANCHOR = register(new AnchorModule());
    public static final AutoElyMaceModule AUTO_ELY_MACE = register(new AutoElyMaceModule());

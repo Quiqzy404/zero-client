@@ -38,6 +38,7 @@ public abstract class MultiPlayerGameModeMixin {
 			if (player instanceof LocalPlayer lp) {
 				ModuleManager.AUTO_WEAPON.beforeAttack(lp, target);
 				ModuleManager.W_TAP.onAttack(lp);
+				ModuleManager.AUTO_BACKSTEP.onAttack(lp, target);
 				ModuleManager.AUTO_JUMP_RESET.onYouAttack();
 				ModuleManager.HIT_EFFECTS.onAttack(lp, target);
 				ModuleManager.KILL_EFFECTS.onAttack(lp, target);
