@@ -19,18 +19,19 @@ import dev.quiqzy.client.module.Setting;
 /**
  * Hit Flick: Klickst du einen Gegner an, dreht sich die Kamera ZUERST in die eingestellte Richtung
  * (Standard: 180° = nach hinten), bleibt dort "Flick Time" Ticks, dreht dann zurück auf den Gegner und schlägt.
- * Die Richtung ist relativ zum Gegner: Yaw 0 = auf ihn, 180 = von ihm weg, 90 = rechts, -90 = links.
+ * Die Richtung ist relativ zu deinem Blick (nur seitlich, kein Pitch): 180 = nach hinten, 90 = rechts, -90 = links.
+ * Danach geht es EXAKT auf deinen Blick vom Klick zurück und schlägt.
  */
 public final class HitFlickModule extends Module {
 
 	public final Setting.Int flickYaw = add(new Setting.Int("flick_yaw", "Flick Direction", 180, -180, 180, "°"));
-	public final Setting.Choice pitchMode = add(new Setting.Choice("pitch_mode", "Flick Pitch Mode", "Keep", "Keep", "Fixed"));
-	public final Setting.Int flickPitch = add(new Setting.Int("flick_pitch", "Flick Pitch", 0, -90, 90, "°"));
 	public final Setting.Int flickTicks = add(new Setting.Int("flick_ticks", "Flick Time", 2, 1, 10, " t"));
 	public final Setting.Choice returnMode = add(new Setting.Choice("return_mode", "Return", "Snap", "Snap", "Smooth"));
 	public final Setting.Bool weaponsOnly = add(new Setting.Bool("weapons_only", "Weapons Only", true));
 
 	private Entity target;
+	/** Dein Blick beim Klick – danach geht es exakt hierhin zurück. */
+	private float origYaw, origPitch;
 	private int flickLeft;
 	private int returnLeft;
 
@@ -59,16 +60,16 @@ public final class HitFlickModule extends Module {
 			}
 			if (flickLeft > 0) {
 				flickLeft--;
-				applyFlick(p, target); // Richtung halten, falls Gegner/du dich bewegst
+				applyFlick(p);
 				if (flickLeft == 0) returnLeft = returnMode.get().equals("Smooth") ? 2 : 0;
 				if (flickLeft > 0 || returnLeft > 0) return;
 			}
 			if (returnLeft > 0) {
 				returnLeft--;
-				look(p, target, 0.6f);
+				back(p, 0.6f);
 				if (returnLeft > 0) return;
 			}
-			look(p, target, 1f);
+			back(p, 1f);
 			if (inReach(p, target)) {
 				mc.gameMode.attack(p, target);
 			}
@@ -84,34 +85,25 @@ public final class HitFlickModule extends Module {
 		while (mc.options.keyAttack.consumeClick()) {
 		}
 		target = le;
+		origYaw = p.getYRot();
+		origPitch = p.getXRot();
 		flickLeft = Math.max(1, flickTicks.get());
-		applyFlick(p, le);
+		applyFlick(p);
 	}
 
-	private void applyFlick(LocalPlayer p, Entity t) {
-		float[] r = rotTo(p, t);
-		p.setYRot(Mth.wrapDegrees(r[0] + flickYaw.get()));
-		if (pitchMode.get().equals("Fixed")) p.setXRot(Mth.clamp(flickPitch.get(), -90f, 90f));
+	/** Nur seitlich drehen (Yaw relativ zu deinem Blick), Pitch bleibt wie er war. */
+	private void applyFlick(LocalPlayer p) {
+		p.setYRot(origYaw + flickYaw.get());
+		p.setXRot(origPitch);
 		p.setYHeadRot(p.getYRot());
 	}
 
-	/** Dreht anteilig (k=1 -> sofort) auf das Ziel. */
-	private static void look(LocalPlayer p, Entity t, float k) {
-		float[] r = rotTo(p, t);
-		float dy = Mth.wrapDegrees(r[0] - p.getYRot());
-		p.setYRot(p.getYRot() + dy * k);
-		p.setXRot(Mth.clamp(p.getXRot() + (r[1] - p.getXRot()) * k, -90f, 90f));
+	/** Zurück auf den ursprünglichen Blick (k=1 -> exakt). */
+	private void back(LocalPlayer p, float k) {
+		float dy = Mth.wrapDegrees(origYaw - p.getYRot());
+		p.setYRot(k >= 1f ? origYaw : p.getYRot() + dy * k);
+		p.setXRot(origPitch);
 		p.setYHeadRot(p.getYRot());
-	}
-
-	private static float[] rotTo(LocalPlayer p, Entity t) {
-		Vec3 eye = p.getEyePosition();
-		Vec3 c = t.getBoundingBox().getCenter();
-		double dx = c.x - eye.x, dy = c.y - eye.y, dz = c.z - eye.z;
-		double h = Math.sqrt(dx * dx + dz * dz);
-		float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0);
-		float pitch = (float) Mth.clamp(-Math.toDegrees(Math.atan2(dy, h)), -90.0, 90.0);
-		return new float[] { yaw, pitch };
 	}
 
 	private static boolean inReach(LocalPlayer p, Entity t) {
