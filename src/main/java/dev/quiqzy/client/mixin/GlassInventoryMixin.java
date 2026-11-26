@@ -72,7 +72,7 @@ public abstract class GlassInventoryMixin {
 		ZeroRender.noStroke = true;
 		try {
 			ZeroRender.glow(g, x1, y1 + 5f, x2, y2 + 7f, 14f, 18f, ZeroRender.alpha(0xFF000000, 0.40f));
-			ZeroRender.frost(g, x1, y1, x2, y2, 14f, 0xC81C1D21, 1f);
+			ZeroRender.panel(g, x1, y1, x2, y2, 14f, 0x9E14161C, 0x14FFFFFF, 1f);
 			// heller Glanz oben + feine helle Kante
 			ZeroRender.gradient(g, x1, y1, x2, y1 + 18f, 14f, ZeroRender.alpha(0xFFFFFFFF, 0.06f), 0x00FFFFFF, 90f);
 			ZeroRender.stroke(g, x1, y1, x2, y2, 14f, 0.8f, ZeroRender.alpha(0xFFFFFFFF, 0.14f));

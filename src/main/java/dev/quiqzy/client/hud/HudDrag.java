@@ -126,7 +126,7 @@ public final class HudDrag {
 			String tip = "Drag HUD to move  ·  Right-click = reset";
 			float tw = ZeroFont.BOLD.width(tip, 6.4f, 0f);
 			ZeroRender.noTint = true;
-			ZeroRender.frost(g, vw / 2f - tw / 2f - 10f, 6f, vw / 2f + tw / 2f + 10f, 21f, 7.5f, 0xC81C1D21, 1f);
+			ZeroRender.panel(g, vw / 2f - tw / 2f - 10f, 6f, vw / 2f + tw / 2f + 10f, 21f, 7.5f, 0x9E14161C, 0x14FFFFFF, 1f);
 			ZeroRender.textCentered(g, ZeroFont.BOLD, tip, vw / 2f, 9.6f, 6.4f, 0xFFF4EEE8);
 			ZeroRender.noTint = false;
 		}

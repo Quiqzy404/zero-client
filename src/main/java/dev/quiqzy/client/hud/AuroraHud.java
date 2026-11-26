@@ -67,12 +67,12 @@ public final class AuroraHud {
 	/** Glass-Theme: einmal pro Frame das Spielbild weichzeichnen, damit HUD-Glas echte Unschärfe dahinter hat. */
 	public static void captureBlur() {
 		var acc = ModuleManager.ACCENT;
-		if (acc == null || !Theme.glass() || !active() || !acc.hudBlur.on()) return;
+		if (acc == null || !active() || !acc.hudBlur.on()) return;
 		long now = System.nanoTime();
 		if (now - blurAt < 2_000_000L && dev.quiqzy.client.gui.engine.ZeroBlur.result() != null) return;
 		blurAt = now;
 		try {
-			dev.quiqzy.client.gui.engine.ZeroBlur.capture();
+			dev.quiqzy.client.gui.engine.ZeroBlur.capture(ModuleManager.CLICK_GUI.blurStrength.get());
 		} catch (Throwable ignored) {
 		}
 	}
@@ -83,7 +83,8 @@ public final class AuroraHud {
 	 */
 	public static void surface(GuiGraphics g, float x1, float y1, float x2, float y2, float r, float alpha) {
 		if (alpha <= 0.01f) return;
-		if (Theme.glass()) {
+		// neuer Stil (wie die Panel-GUI): immer Glas mit Blur + Farbaufnahme, kein Rand
+		if (true) {
 			glassSurface(g, x1, y1, x2, y2, r, alpha);
 			return;
 		}
@@ -99,12 +100,17 @@ public final class AuroraHud {
 
 	/** Glass-Theme HUD: nur graues, durchsichtiges Milchglas mit Blur. Kein Rand, kein Schatten, kein Glanz. */
 	public static void glassSurface(GuiGraphics g, float x1, float y1, float x2, float y2, float r, float alpha) {
-		ZeroRender.frost(g, x1, y1, x2, y2, r, 0x8C2A2B30, alpha);
+		ZeroRender.panel(g, x1, y1, x2, y2, r, a(0xFF14161C, 0.50f), a(0xFFFFFFFF, 0.08f), alpha);
 	}
 
 	/** Heller Glas-"Tropfen" für Auswahl/aktive Elemente (statt farbiger Füllung). */
 	public static void lens(GuiGraphics g, float x1, float y1, float x2, float y2, float r, float alpha) {
 		if (alpha <= 0.01f) return;
+		// aktiv/ausgewählt = weißes Milchglas (wie aktive Module in der Panel-GUI)
+		if (true) {
+			ZeroRender.panel(g, x1, y1, x2, y2, r, a(0xFFFFFFFF, 0.40f), a(0xFFFFFFFF, 0.10f), alpha);
+			return;
+		}
 		if (!Theme.glass()) {
 			ZeroRender.glow(g, x1, y1, x2, y2, r, 5f, a(accent(), 0.40f * alpha));
 			ZeroRender.gradient(g, x1, y1, x2, y2, r, a(accent(), 0.55f * alpha), a(accent2(), 0.25f * alpha), 90f);

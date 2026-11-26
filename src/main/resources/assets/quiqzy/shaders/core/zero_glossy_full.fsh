@@ -91,15 +91,20 @@ void main() {
         prevT = t;
     }
     if (found <= 0.001) {
-        if (lastUv.x < 0.0) {
-            // Strahl zeigt hinter die Kamera / aus dem Bild (z.B. unten beim Runterschauen):
-            // Ersatz-Spiegelung = gespiegelter Bildpunkt von oben (Himmel/Horizont), statt nichts.
+        // kein Treffer: weich die Richtung in die Ferne projizieren (Himmel/Horizont, ohne Stufen)
+        vec2 fuv;
+        if (r.z < -0.08) {
+            vec3 fs = project(start + r * 400.0);
+            fuv = clamp(fs.xy, vec2(0.01), vec2(0.99));
+        } else {
+            // Strahl zeigt hinter die Kamera (z.B. unten beim Runterschauen): gespiegelter Bildpunkt von oben
             vec2 suv = texCoord;
-            lastUv = vec2(suv.x, clamp(1.0 - suv.y * 0.85, 0.02, 0.98));
+            fuv = vec2(suv.x, clamp(1.0 - suv.y * 0.85, 0.02, 0.98));
         }
-        hitCol = texture(Sampler0, lastUv).rgb;
+        hitCol = texture(Sampler0, fuv).rgb;
         found = 0.45;
     }
+
     float fres = 0.45 + 0.55 * pow(1.0 - ndv, 3.0);
     fragColor = vec4(hitCol, GParams.x * fres * found);
 }

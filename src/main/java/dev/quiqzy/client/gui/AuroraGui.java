@@ -289,11 +289,9 @@ public final class AuroraGui extends Screen {
 	}
 
 	private void window(GuiGraphics g, float x1, float y1, float x2, float y2, float al) {
-		if (Theme.glass()) {
+		if (true) { // neuer Stil: immer Glas
 			ZeroRender.glow(g, x1, y1 + 6f, x2, y2 + 10f, 22f, 30f, a(0xFF000000, 0.30f * al));
-			ZeroRender.frost(g, x1, y1, x2, y2, 22f, 0xC81C1D21, al);
-			ZeroRender.strokeGradient(g, x1, y1, x2, y2, 22f, 1f, a(0xFFFFFFFF, 0.45f * al), a(0xFFFFFFFF, 0.05f * al), 60f);
-			ZeroRender.strokeGradient(g, x1, y1, x2, y2, 22f, 0.7f, 0x00FFFFFF, a(0xFFFFFFFF, 0.14f * al), 60f);
+			ZeroRender.panel(g, x1, y1, x2, y2, 22f, a(0xFF14161C, 0.62f), a(0xFFFFFFFF, 0.08f), al);
 			return;
 		}
 		float h = hue();
