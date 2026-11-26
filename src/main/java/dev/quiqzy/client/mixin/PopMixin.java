@@ -22,6 +22,9 @@ public abstract class PopMixin {
 	private void zero$pop(ClientboundEntityEventPacket packet, CallbackInfo ci) {
 		Minecraft mc = Minecraft.getInstance();
 		if (packet.getEventId() != 35 || mc.level == null || !mc.isSameThread()) return;
-		if (packet.getEntity(mc.level) instanceof Player p) ModuleManager.POP_COUNTER.onPop(p);
+		if (packet.getEntity(mc.level) instanceof Player p) {
+			ModuleManager.POP_COUNTER.onPop(p);
+			if (p == mc.player) ModuleManager.AUTO_DOUBLE_HAND.onSelfPop(mc);
+		}
 	}
 }

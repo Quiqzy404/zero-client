@@ -219,6 +219,7 @@ public final class ModuleManager {
    public static final CrystalOptimizerModule CRYSTAL_OPTIMIZER = register(new CrystalOptimizerModule());
    public static final SurroundModule SURROUND = register(new SurroundModule());
    public static final AutoDoubleHandModule AUTO_DOUBLE_HAND = register(new AutoDoubleHandModule());
+   public static final dev.quiqzy.client.module.combat.AutoInvTotemModule AUTO_INV_TOTEM = register(new dev.quiqzy.client.module.combat.AutoInvTotemModule());
    public static final KeyPearlModule KEY_PEARL = register(new KeyPearlModule());
    public static final HoleEspModule HOLE_ESP = register(new HoleEspModule());
    public static final AnchorAuraModule ANCHOR_AURA = register(new AnchorAuraModule());

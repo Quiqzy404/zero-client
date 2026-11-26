@@ -18,11 +18,22 @@ public final class AutoDoubleHandModule extends Module {
 	public final Setting.Int crystalRange = add(new Setting.Int("crystal_range", "Crystal Range", 4, 2, 8, " b"));
 	public final Setting.Bool refill = add(new Setting.Bool("refill", "Refill Hotbar Totem", true));
 	public final Setting.Int refillSlot = add(new Setting.Int("refill_slot", "Totem Slot", 9, 1, 9));
+	/** Beim eigenen Totem-Pop sofort auf den Hotbar-Totem wechseln (im selben Moment, nicht erst im nächsten Tick). */
+	public final Setting.Bool swapOnPop = add(new Setting.Bool("swap_on_pop", "Swap On Pop", true));
 
 	private int refillCooldown;
 
 	public AutoDoubleHandModule() {
 		super("auto_double_hand", "Auto Double Hand", "Switches to a hotbar totem when you're in danger", Category.COMBAT);
+	}
+
+	/** Aus PopMixin: du selbst hast gerade einen Totem verbraucht -> sofort Hotbar-Totem in die Hand. */
+	public void onSelfPop(Minecraft mc) {
+		LocalPlayer p = mc.player;
+		if (!isEnabled() || !swapOnPop.on() || p == null) return;
+		if (p.getMainHandItem().is(Items.TOTEM_OF_UNDYING)) return;
+		int slot = Targets.hotbar(p, s -> s.is(Items.TOTEM_OF_UNDYING));
+		if (slot >= 0) p.getInventory().setSelectedSlot(slot);
 	}
 
 	private boolean danger(Minecraft mc, LocalPlayer p) {
