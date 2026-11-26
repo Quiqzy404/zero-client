@@ -444,10 +444,6 @@ vec3 nightSky(vec3 d, float t, bool rain) {
     vec2 p = d.xz / (max(up, 0.0) + 0.15);
     float c = fbm2(p * 0.7 + vec2(t * 0.04, t * 0.02));
     col = mix(col, vec3(0.10, 0.11, 0.15), smoothstep(0.35, 0.8, c) * 0.9);
-    // Regenstreifen
-    vec2 uv = vec2(atan(d.z, d.x) * 40.0, up * 22.0 + t * 9.0);
-    float streak = step(0.93, hash12(floor(vec2(uv.x, uv.y * 0.15)))) * smoothstep(0.5, 0.0, abs(fract(uv.x) - 0.5));
-    col += vec3(0.35, 0.40, 0.55) * streak * 0.35;
     float flash = step(0.985, fract(sin(floor(t * 0.9) * 91.7) * 4375.5)) * (1.0 - fract(t * 0.9));
     col += vec3(0.45, 0.5, 0.75) * flash * smoothstep(0.4, 0.75, c);
     return col;
@@ -550,7 +546,11 @@ void main() {
         if (preset == 9) col = liquidMetal(d, t, sc, vec3(0.035, 0.020, 0.006), vec3(0.55, 0.36, 0.10), vec3(1.0, 0.84, 0.48));
         else if (preset == 10) col = liquidMetal(d, t, sc, vec3(0.012, 0.014, 0.020), vec3(0.42, 0.45, 0.52), vec3(1.0, 1.0, 1.0));
         else if (preset == 11) col = liquidMetal(d, t, sc, vec3(0.045, 0.010, 0.022), vec3(0.50, 0.24, 0.24), vec3(1.0, 0.80, 0.70));
-        else if (preset == 12) col = glassRain(d, t, sc);
+        else if (preset == 12) { // Glass: helles, bläulich-weißes flüssiges Glas über hellem Himmel
+            vec3 sky = mix(vec3(0.72, 0.80, 0.90), vec3(0.42, 0.56, 0.76), smoothstep(-0.05, 0.75, d.y));
+            vec3 glass = liquidMetal(d, t, sc, vec3(0.30, 0.40, 0.56), vec3(0.70, 0.80, 0.92), vec3(1.0, 1.0, 1.0));
+            col = mix(sky, glass, 0.62);
+        }
         else col = nightSky(d, t, preset == 14);
     } else { // ---------------- Storm
         col = mix(vec3(0.20, 0.22, 0.27), vec3(0.06, 0.07, 0.10), smoothstep(-0.1, 0.7, up));

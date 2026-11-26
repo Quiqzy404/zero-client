@@ -99,7 +99,7 @@ public final class SkyRenderer {
 	private static void draw(RenderTarget main) {
 		CustomSkyModule m = ModuleManager.CUSTOM_SKY;
 		long now = System.nanoTime();
-		if (lastNs != 0) animTime += (now - lastNs) / 1e9 * (m.speed.asFloat() * 10.0);
+		if (lastNs != 0) animTime += (now - lastNs) / 1e9 * (m.speed.asFloat() * 4.0);
 		lastNs = now;
 		int theme = AuroraHud.accent() & 0xFFFFFF;
 		CommandEncoder enc = RenderSystem.getDevice().createCommandEncoder();
