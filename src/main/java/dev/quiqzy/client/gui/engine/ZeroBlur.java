@@ -32,6 +32,12 @@ public final class ZeroBlur {
    }
 
    public static void capture() {
+      capture(4);
+   }
+
+   /** Blur mit wählbarer Stärke: 1 = leicht ... 4 = sehr stark (Anzahl Verkleinerungs-Stufen). */
+   public static void capture(int levels) {
+      levels = Math.max(1, Math.min(4, levels));
       ready = false;
       RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
       GpuTextureView source = main.getColorTextureView();
@@ -41,12 +47,12 @@ public final class ZeroBlur {
          CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
          GpuTextureView previous = source;
 
-         for (int i = 1; i <= 4; i++) {
+         for (int i = 1; i <= levels; i++) {
             pass(encoder, ZeroPipelines.BLUR_DOWN, previous, views[i], linear);
             previous = views[i];
          }
 
-         for (int i = 3; i >= 0; i--) {
+         for (int i = levels - 1; i >= 0; i--) {
             pass(encoder, ZeroPipelines.BLUR_UP, previous, views[i], linear);
             previous = views[i];
          }

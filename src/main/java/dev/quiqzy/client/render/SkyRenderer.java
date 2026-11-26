@@ -99,15 +99,15 @@ public final class SkyRenderer {
 	private static void draw(RenderTarget main) {
 		CustomSkyModule m = ModuleManager.CUSTOM_SKY;
 		long now = System.nanoTime();
-		if (lastNs != 0) animTime += (now - lastNs) / 1e9 * (m.speed.get() / 100.0);
+		if (lastNs != 0) animTime += (now - lastNs) / 1e9 * (m.speed.asFloat() * 10.0);
 		lastNs = now;
 		int theme = AuroraHud.accent() & 0xFFFFFF;
 		CommandEncoder enc = RenderSystem.getDevice().createCommandEncoder();
 		if (ubo == null) ubo = RenderSystem.getDevice().createBuffer(() -> "zero sky ubo", GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST, UBO_SIZE);
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			ByteBuffer data = Std140Builder.onStack(stack, UBO_SIZE)
-					.putVec4((float) (animTime % 10000.0), m.presetIndex(), m.brightness.get() / 100f, m.stars.get() / 100f)
-					.putVec4((theme >> 16 & 255) / 255f, (theme >> 8 & 255) / 255f, (theme & 255) / 255f, m.snowAmount.get() / 100f)
+					.putVec4((float) (animTime % 10000.0), m.presetIndex(), m.intensity.get() / 100f, m.scale.asFloat())
+					.putVec4((theme >> 16 & 255) / 255f, (theme >> 8 & 255) / 255f, (theme & 255) / 255f, 0f)
 					.get();
 			enc.writeToBuffer(ubo.slice(), data);
 		}
@@ -120,15 +120,6 @@ public final class SkyRenderer {
 			pass.setUniform("DynamicTransforms", transforms);
 			pass.setUniform("ZeroSky", ubo);
 			pass.draw(0, 3);
-		}
-		if (m.presetIndex() == 1 && m.snowFall.on()) {
-			try (RenderPass pass = enc.createRenderPass(() -> "zero sky snow", main.getColorTextureView(), OptionalInt.empty())) {
-				pass.setPipeline(SNOW);
-				RenderSystem.bindDefaultUniforms(pass);
-				pass.setUniform("DynamicTransforms", transforms);
-				pass.setUniform("ZeroSky", ubo);
-				pass.draw(0, 3);
-			}
 		}
 	}
 }

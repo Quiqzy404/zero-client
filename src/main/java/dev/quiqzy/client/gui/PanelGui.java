@@ -183,7 +183,7 @@ public final class PanelGui extends Screen {
 		float ease = 1f - (1f - open) * (1f - open) * (1f - open);
 
 		boolean blur = cfg().bgBlur.on();
-		ZeroBlur.capture(); // Blur-Textur für die Glas-Panels (Hintergrund bleibt scharf, außer Background Blur)
+		ZeroBlur.capture(cfg().blurStrength.get()); // Blur-Textur für die Glas-Panels (Hintergrund bleibt scharf, außer Background Blur)
 		g.pose().pushMatrix();
 		g.pose().scale(1f / k);
 		layout();
@@ -272,8 +272,10 @@ public final class PanelGui extends Screen {
 		boolean visible = y + ROW > clipTop && y < clipBot;
 		if (visible) {
 			if (onA > 0.01f) {
+				// aktives Modul = weißes Milchglas: Hintergrund schimmert noch durch
 				int fill = cfg().accentRows.on() ? accent() : 0xFFFFFFFF;
-				ZeroRender.rect(g, x1, y + 0.8f, x2, y + ROW - 0.8f, rr, a(fill, (0.80f * onA) * al));
+				float wh = cfg().activeGlass.get() / 100f;
+				ZeroRender.panel(g, x1, y + 0.8f, x2, y + ROW - 0.8f, rr, a(fill, wh), a(0xFFFFFFFF, 0.12f), onA * al);
 			} else if (hv) {
 				ZeroRender.rect(g, x1, y + 0.8f, x2, y + ROW - 0.8f, rr, a(0xFFFFFFFF, 0.08f * al));
 			}
@@ -352,7 +354,7 @@ public final class PanelGui extends Screen {
 			float h = 19f;
 			if (vis) {
 				ZeroRender.text(g, ZeroFont.REGULAR, name, lx, y + 2.6f, 5.6f, label);
-				ZeroRender.textRight(g, ZeroFont.REGULAR, in.get() + (in.unit() == null ? "" : in.unit()), rx, y + 2.6f, 5.6f, value);
+				ZeroRender.textRight(g, ZeroFont.REGULAR, in.display(), rx, y + 2.6f, 5.6f, value);
 				float sx1 = lx, sx2 = rx, sy = y + 13.5f;
 				float pr = an(in, in.progress(), 20f);
 				ZeroRender.rect(g, sx1, sy - 0.9f, sx2, sy + 0.9f, 0.9f, a(0xFFFFFFFF, 0.16f * al));

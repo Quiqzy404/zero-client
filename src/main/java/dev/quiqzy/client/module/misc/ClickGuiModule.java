@@ -12,6 +12,8 @@ public final class ClickGuiModule extends Module {
 	public final Setting.Choice style = add(new Setting.Choice("style", "GUI Style", "Panels", "Panels", "Classic"));
 	public final Setting.Int scale = add(new Setting.Int("scale", "GUI Scale", 100, 60, 160, "%"));
 	public final Setting.Int panelOpacity = add(new Setting.Int("panel_opacity", "Panel Opacity", 45, 0, 100, "%"));
+	public final Setting.Int blurStrength = add(new Setting.Int("blur_strength", "Glass Blur", 2, 1, 4));
+	public final Setting.Int activeGlass = add(new Setting.Int("active_glass", "Active Row Whiteness", 55, 15, 95, "%"));
 	public final Setting.Bool bgBlur = add(new Setting.Bool("bg_blur", "Background Blur", false));
 	public final Setting.Int bgDim = add(new Setting.Int("bg_dim", "Background Dim", 10, 0, 90, "%"));
 	public final Setting.Int roundness = add(new Setting.Int("roundness", "Corner Roundness", 9, 0, 16));

@@ -733,6 +733,30 @@ final class InGameScenario {
          step.accept("ag8@5", mc -> { ModuleManager.ACCENT.preset.set("Violet"); ModuleManager.KILL_AURA.setEnabled(false); ModuleManager.KILL_AURA.setKeybind(-1); ag[0].testSearch(""); mc.setScreen(null); });
          return;
       }
+      if ("skyshaders".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
+         step.accept("ss0@25", mc -> {
+            mc.setScreen(null);
+            ModuleManager.CUSTOM_SKY.setEnabled(true);
+            mc.player.setYRot(0f);
+            mc.player.setXRot(-35f);
+            mc.options.hideGui = true;
+            IntegratedServer server = mc.getSingleplayerServer();
+            int px = mc.player.getBlockX(), py = mc.player.getBlockY(), pz = mc.player.getBlockZ();
+            server.execute(() -> {
+               var cmd = server.getCommands(); var src = server.createCommandSourceStack();
+               cmd.performPrefixedCommand(src, "time set 6000");
+               cmd.performPrefixedCommand(src, "fill " + (px - 2) + " " + py + " " + (pz + 6) + " " + (px + 6) + " " + (py + 14) + " " + (pz + 6) + " stone");
+            });
+         });
+         String[] st = dev.quiqzy.client.module.visuals.CustomSkyModule.PRESETS;
+         for (int i = 0; i < st.length; i++) {
+            final String name = st[i];
+            step.accept("ss" + i + "a@5", mc -> { ModuleManager.CUSTOM_SKY.preset.set(name); mc.player.setXRot(-35f); });
+            step.accept("ss" + i + "b@25", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "sky_" + name.replace(' ', '_') + ".png", mc.getMainRenderTarget(), 1, msg -> {}));
+         }
+         step.accept("ssz@5", mc -> mc.options.hideGui = false);
+         return;
+      }
       if ("panels".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
          final dev.quiqzy.client.gui.PanelGui[] pg = new dev.quiqzy.client.gui.PanelGui[1];
          step.accept("pg0@25", mc -> {

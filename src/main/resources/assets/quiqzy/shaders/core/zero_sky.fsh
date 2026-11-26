@@ -365,6 +365,94 @@ vec3 spaceBase(vec3 d, float t, float starAmt, vec3 nebA, vec3 nebB, float nebAm
     return col;
 }
 
+
+// ------------------------------------------------------------------ Sky Shaders (9-14)
+
+// Flüssiges Metall: doppelt verwirbeltes Rauschen, dunkler Grund, glänzende Schlieren an den Kämmen.
+float fbmSoft(vec3 p) {
+    float v = 0.0, a = 0.5;
+    for (int i = 0; i < 3; i++) {
+        v += a * snoise3(p);
+        p = p * 2.03 + vec3(1.7, 9.2, 4.1);
+        a *= 0.5;
+    }
+    return v / 0.875;
+}
+
+vec3 liquidMetal(vec3 d, float t, float scale, vec3 dark, vec3 mid, vec3 hi) {
+    // große, weich fließende Formen (wenig Oktaven) + starke Verwirbelung
+    vec3 p = d * 0.95 * scale;
+    vec3 q = vec3(fbmSoft(p + vec3(0.0, 0.0, t * 0.30)),
+                  fbmSoft(p + vec3(5.2, 1.3, 2.8) - vec3(t * 0.24, 0.0, 0.0)),
+                  fbmSoft(p + vec3(1.7, 9.2, 3.3) + vec3(0.0, t * 0.20, 0.0)));
+    vec3 r = vec3(fbmSoft(p + 2.4 * q + vec3(1.7, 9.2, 0.0) + t * 0.12),
+                  fbmSoft(p + 2.4 * q + vec3(8.3, 2.8, 4.1) - t * 0.10),
+                  fbmSoft(p + 2.4 * q + vec3(3.1, 6.4, 7.7)));
+    float f = fbmSoft(p + 2.2 * r);
+    // Kämme -> glänzende Schlieren (breiter Glanz + heller Kern)
+    float w = f * 6.5 + q.x * 2.4 + r.y * 1.5;
+    float ridge = 1.0 - abs(sin(w * 3.14159));
+    float core = pow(ridge, 10.0);
+    float glow = pow(ridge, 3.0);
+    float body = smoothstep(0.35, 0.75, f);
+    vec3 col = mix(dark, mid * 0.55, body);
+    col += mid * glow * 0.55;
+    col += hi * core * (0.8 + 0.6 * body);
+    return col;
+}
+
+// Glass Rain: Tropfen, die auf einer Glasscheibe vor dem Himmel herunterlaufen.
+vec3 glassRain(vec3 d, float t, float scale) {
+    float up = d.y;
+    vec3 col = mix(vec3(0.70, 0.78, 0.88), vec3(0.36, 0.50, 0.70), smoothstep(-0.05, 0.75, up));
+    vec2 uv = vec2(atan(d.z, d.x) * 3.0, up * 6.0) * scale;
+    float drops = 0.0, light = 0.0;
+    for (int i = 0; i < 3; i++) {
+        float fi = float(i);
+        vec2 g = uv * (1.0 + fi * 0.7) + vec2(fi * 7.3, 0.0);
+        vec2 cell = floor(g);
+        float h = hash12(cell + fi * 13.1);
+        float speed = 0.15 + h * 0.35;
+        vec2 f = fract(g + vec2(0.0, t * speed)) - 0.5;
+        f.x += (hash12(cell + 3.7) - 0.5) * 0.6;
+        float r = 0.06 + 0.10 * hash12(cell + 9.1);
+        float dd = length(f * vec2(1.0, 0.8));
+        float drop = smoothstep(r, r * 0.55, dd) * step(0.45, h);
+        // Spur über dem Tropfen
+        float trail = smoothstep(0.02, 0.0, abs(f.x)) * smoothstep(0.0, 0.45, f.y) * step(0.45, h) * 0.35;
+        drops += drop + trail;
+        light += drop * smoothstep(0.0, r, -f.y + r * 0.3);
+    }
+    col = mix(col, col * 0.82 + vec3(0.05, 0.07, 0.10), clamp(drops, 0.0, 1.0));
+    col += vec3(1.0) * clamp(light, 0.0, 1.0) * 0.35;
+    // weiche Wolken dahinter
+    vec2 p = d.xz / (max(up, 0.0) + 0.15);
+    col = mix(col, vec3(0.86, 0.89, 0.94), smoothstep(0.45, 0.85, fbm2(p * 0.6 + vec2(t * 0.01, 0.0))) * 0.5 * smoothstep(0.0, 0.2, up));
+    return col;
+}
+
+vec3 nightSky(vec3 d, float t, bool rain) {
+    float up = d.y;
+    vec3 col = mix(vec3(0.06, 0.08, 0.18), vec3(0.008, 0.012, 0.04), smoothstep(-0.05, 0.7, up));
+    if (!rain) {
+        col += stars(d, 1.3, t) * smoothstep(-0.02, 0.25, up);
+        vec3 mdir = normalize(vec3(-0.35, 0.45, 0.82));
+        float mb = max(dot(d, mdir), 0.0);
+        col += vec3(0.30, 0.40, 0.70) * pow(mb, 25.0) * 0.35 + vec3(0.9, 0.92, 1.0) * smoothstep(0.9993, 0.9996, mb);
+        return col;
+    }
+    vec2 p = d.xz / (max(up, 0.0) + 0.15);
+    float c = fbm2(p * 0.7 + vec2(t * 0.04, t * 0.02));
+    col = mix(col, vec3(0.10, 0.11, 0.15), smoothstep(0.35, 0.8, c) * 0.9);
+    // Regenstreifen
+    vec2 uv = vec2(atan(d.z, d.x) * 40.0, up * 22.0 + t * 9.0);
+    float streak = step(0.93, hash12(floor(vec2(uv.x, uv.y * 0.15)))) * smoothstep(0.5, 0.0, abs(fract(uv.x) - 0.5));
+    col += vec3(0.35, 0.40, 0.55) * streak * 0.35;
+    float flash = step(0.985, fract(sin(floor(t * 0.9) * 91.7) * 4375.5)) * (1.0 - fract(t * 0.9));
+    col += vec3(0.45, 0.5, 0.75) * flash * smoothstep(0.4, 0.75, c);
+    return col;
+}
+
 void main() {
     vec2 ndc = texCoord * 2.0 - 1.0;
     vec4 v = inverse(ProjMat) * vec4(ndc, 1.0, 1.0);
@@ -457,6 +545,13 @@ void main() {
         core = normalize(core - axis * dot(core, axis));
         col += vec3(1.0, 0.85, 0.65) * pow(max(dot(d, core), 0.0), 40.0) * band * 1.5;
         col += stars(d, starAmt * 1.6, t) + starLayer(d, 500.0, 0.25 * band * starAmt, t, 0.2) * 0.8;
+    } else if (preset >= 9) { // ---------------- Sky Shaders
+        float sc = max(SkyParams.w, 0.2);
+        if (preset == 9) col = liquidMetal(d, t, sc, vec3(0.035, 0.020, 0.006), vec3(0.55, 0.36, 0.10), vec3(1.0, 0.84, 0.48));
+        else if (preset == 10) col = liquidMetal(d, t, sc, vec3(0.012, 0.014, 0.020), vec3(0.42, 0.45, 0.52), vec3(1.0, 1.0, 1.0));
+        else if (preset == 11) col = liquidMetal(d, t, sc, vec3(0.045, 0.010, 0.022), vec3(0.50, 0.24, 0.24), vec3(1.0, 0.80, 0.70));
+        else if (preset == 12) col = glassRain(d, t, sc);
+        else col = nightSky(d, t, preset == 14);
     } else { // ---------------- Storm
         col = mix(vec3(0.20, 0.22, 0.27), vec3(0.06, 0.07, 0.10), smoothstep(-0.1, 0.7, up));
         vec2 p = d.xz / (max(up, 0.0) + 0.15);

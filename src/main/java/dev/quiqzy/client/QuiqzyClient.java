@@ -106,7 +106,7 @@ public final class QuiqzyClient implements ClientModInitializer {
       dev.quiqzy.client.render.ChamsRenderer.init();
       dev.quiqzy.client.render.SkyRenderer.init();
       dev.quiqzy.client.render.EspShaderRenderer.init();
-      WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.SkyRenderer::render);
+      WorldRenderEvents.START_MAIN.register(c -> dev.quiqzy.client.render.SkyRenderer.render(null));
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.GlossyFloorRenderer::render);
       dev.quiqzy.client.render.ActivityInspectorRenderer.init();
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.ActivityInspectorRenderer::render);

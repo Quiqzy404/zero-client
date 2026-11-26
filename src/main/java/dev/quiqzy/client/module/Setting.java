@@ -322,6 +322,26 @@ public abstract class Setting<T> {
 			return unit;
 		}
 
+		private int decimals;
+
+		/** Anzeige mit Nachkommastellen: Wert / 10^d (z. B. 7 mit d=2 -> "0.07"). Gespeichert wird weiter die ganze Zahl. */
+		public Int decimals(int d) {
+			this.decimals = d;
+			return this;
+		}
+
+		/** Wert als Text für die GUI (inkl. Einheit). */
+		public String display() {
+			String u = unit == null ? "" : unit;
+			if (decimals <= 0) return value + u;
+			return String.format(java.util.Locale.ROOT, "%." + decimals + "f", value / Math.pow(10, decimals)) + u;
+		}
+
+		/** Wert als Kommazahl (bei decimals) – sonst der normale Wert. */
+		public float asFloat() {
+			return (float) (value / Math.pow(10, decimals));
+		}
+
 		public int min() {
 			return min;
 		}
