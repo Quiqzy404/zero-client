@@ -159,6 +159,7 @@ public final class ModuleManager {
    public static final dev.quiqzy.client.module.visuals.CardAuraModule CARD_AURA = register(new dev.quiqzy.client.module.visuals.CardAuraModule());
    public static final dev.quiqzy.client.module.visuals.KillEffectsModule KILL_EFFECTS = register(new dev.quiqzy.client.module.visuals.KillEffectsModule());
    public static final dev.quiqzy.client.module.visuals.CustomSkyModule CUSTOM_SKY = register(new dev.quiqzy.client.module.visuals.CustomSkyModule());
+   public static final dev.quiqzy.client.module.visuals.BackgroundBlurModule BACKGROUND_BLUR = register(new dev.quiqzy.client.module.visuals.BackgroundBlurModule());
    public static final dev.quiqzy.client.module.visuals.CleanF5Module CLEAN_F5 = register(new dev.quiqzy.client.module.visuals.CleanF5Module());
    public static final GuiWorldModule GUI_WORLD = register(new GuiWorldModule());
    public static final StorageEspModule STORAGE_ESP = register(new StorageEspModule());

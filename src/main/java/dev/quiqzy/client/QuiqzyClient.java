@@ -135,6 +135,7 @@ public final class QuiqzyClient implements ClientModInitializer {
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.FxRenderer::render);
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.GlowWingsRenderer::render);
       WorldRenderEvents.BEFORE_TRANSLUCENT.register(dev.quiqzy.client.render.CardFxRenderer::render);
+      WorldRenderEvents.END_MAIN.register((EndMain)context -> dev.quiqzy.client.render.DepthBlurRenderer.render());
       WorldRenderEvents.END_MAIN.register((EndMain)context -> ModuleManager.frame(Minecraft.getInstance()));
       HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath("quiqzy", "hud"), (g, dt) -> {
          // Eigenes Engine-HUD (gleicher Look wie die GUI) – kein Browser mehr nötig
@@ -149,6 +150,6 @@ public final class QuiqzyClient implements ClientModInitializer {
    }
 
    public static void reopenGui(Minecraft mc) {
-      mc.setScreen(ModuleManager.CLICK_GUI.panels() ? new dev.quiqzy.client.gui.PanelGui() : new dev.quiqzy.client.gui.AuroraGui());
+      mc.setScreen(ModuleManager.CLICK_GUI.create(null));
    }
 }

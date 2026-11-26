@@ -735,6 +735,28 @@ final class InGameScenario {
          step.accept("ag8@5", mc -> { ModuleManager.ACCENT.preset.set("Violet"); ModuleManager.KILL_AURA.setEnabled(false); ModuleManager.KILL_AURA.setKeybind(-1); ag[0].testSearch(""); mc.setScreen(null); });
          return;
       }
+      if ("dock".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
+         final dev.quiqzy.client.gui.DockGui[] dg = new dev.quiqzy.client.gui.DockGui[1];
+         step.accept("dk0@25", mc -> {
+            mc.setScreen(null);
+            ModuleManager.CLICK_GUI.style.set("Dock");
+            ModuleManager.CLICK_GUI.bgBlur.set(false);
+            ModuleManager.CUSTOM_SKY.setEnabled(false);
+            ModuleManager.BACKGROUND_BLUR.setEnabled(true);
+            mc.player.setXRot(5f);
+            IntegratedServer server = mc.getSingleplayerServer();
+            server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "time set 1000"));
+         });
+         step.accept("dk1@30", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "dof_on.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("dk2@5", mc -> ModuleManager.BACKGROUND_BLUR.setEnabled(false));
+         step.accept("dk3@20", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "dof_off.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("dk4@5", mc -> { dg[0] = new dev.quiqzy.client.gui.DockGui(); dg[0].testCategory(dev.quiqzy.client.module.Module.Category.VISUALS); mc.setScreen(dg[0]); });
+         step.accept("dk5@25", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "dock_main.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("dk6@5", mc -> { dg[0].testOpen(ModuleManager.BLOCK_ESP); dg[0].testPopup(ModuleManager.BLOCK_ESP.colorMode); });
+         step.accept("dk7@20", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "dock_settings.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("dk8@5", mc -> mc.setScreen(null));
+         return;
+      }
       if ("skyshaders".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
          step.accept("ss0@25", mc -> {
             mc.setScreen(null);
