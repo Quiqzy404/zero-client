@@ -31,6 +31,7 @@ public final class ZeroPipelines {
    public static final RenderPipeline SHAPE = gui("zero_shape", "zero_shape", "zero_shape", SHAPE_FORMAT, false);
    public static final RenderPipeline GLASS = gui("zero_glass", "zero_shape", "zero_glass", SHAPE_FORMAT, true);
    public static final RenderPipeline FROST = gui("zero_frost", "zero_shape", "zero_frost", SHAPE_FORMAT, true);
+   public static final RenderPipeline PANEL = gui("zero_panel", "zero_shape", "zero_panel", SHAPE_FORMAT, true);
    public static final RenderPipeline TEXT = gui("zero_text", "zero_text", "zero_text", DefaultVertexFormat.POSITION_TEX_COLOR, true);
    public static final RenderPipeline BLUR_DOWN = blur("zero_blur_down");
    public static final RenderPipeline BLUR_UP = blur("zero_blur_up");

@@ -19,12 +19,12 @@ public abstract class ScreenOpenGuiMixin {
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true, require = 0)
 	private void zero$openGui(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
 		Screen self = (Screen) (Object) this;
-		if (self instanceof AuroraGui) return; // eigene Tasten selbst behandeln
+		if (self instanceof AuroraGui || self instanceof dev.quiqzy.client.gui.PanelGui) return; // eigene Tasten selbst behandeln
 		if (!QuiqzyClient.OPEN_GUI.matches(event)) return;
 		if (self.getFocused() instanceof EditBox) return; // nicht beim Tippen in Textfeldern
 		Minecraft mc = Minecraft.getInstance();
 		if (mc == null) return;
-		mc.setScreen(new AuroraGui(self));
+		mc.setScreen(dev.quiqzy.client.module.ModuleManager.CLICK_GUI.panels() ? new dev.quiqzy.client.gui.PanelGui(self) : new AuroraGui(self));
 		cir.setReturnValue(true);
 	}
 }

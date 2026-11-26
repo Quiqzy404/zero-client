@@ -733,6 +733,32 @@ final class InGameScenario {
          step.accept("ag8@5", mc -> { ModuleManager.ACCENT.preset.set("Violet"); ModuleManager.KILL_AURA.setEnabled(false); ModuleManager.KILL_AURA.setKeybind(-1); ag[0].testSearch(""); mc.setScreen(null); });
          return;
       }
+      if ("panels".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
+         final dev.quiqzy.client.gui.PanelGui[] pg = new dev.quiqzy.client.gui.PanelGui[1];
+         step.accept("pg0@25", mc -> {
+            mc.setScreen(null);
+            ModuleManager.ACCENT.preset.set("Glass");
+            for (var m : new dev.quiqzy.client.module.Module[]{ModuleManager.FULLBRIGHT, ModuleManager.STORAGE_ESP, ModuleManager.FREECAM, ModuleManager.HUD, ModuleManager.AUTO_TOTEM})
+               m.setEnabled(true);
+            ModuleManager.FREECAM.setEnabled(false);
+            ModuleManager.ZOOM.setKeybind(67);
+            ModuleManager.CLICK_GUI.bgBlur.set(false);
+            ModuleManager.CLICK_GUI.bgDim.set(10);
+            IntegratedServer server = mc.getSingleplayerServer();
+            server.execute(() -> {
+               var cmd = server.getCommands(); var src = server.createCommandSourceStack();
+               cmd.performPrefixedCommand(src, "time set 1000");
+            });
+         });
+         step.accept("pg1@30", mc -> { pg[0] = new dev.quiqzy.client.gui.PanelGui(); mc.setScreen(pg[0]); });
+         step.accept("pg2@25", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "panels_main.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("pg3@5", mc -> { pg[0].testExpand(ModuleManager.BLOCK_ESP); pg[0].testExpand(ModuleManager.CLICK_GUI); pg[0].testPopup(ModuleManager.BLOCK_ESP.colorMode); });
+         step.accept("pg4@25", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "panels_expand.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("pg5@5", mc -> pg[0].testSearch("esp"));
+         step.accept("pg6@20", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "panels_search.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("pg7@5", mc -> mc.setScreen(null));
+         return;
+      }
       if ("aurora".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
          step.accept("au0@25", mc -> {
             mc.setScreen(null);

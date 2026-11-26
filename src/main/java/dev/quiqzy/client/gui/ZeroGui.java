@@ -424,6 +424,7 @@ public final class ZeroGui extends Screen {
          case WORLD -> '\ue0eb';
          case MISC -> '\ue0ba';
          case TIERSMC -> '\ue115';
+         case CLIENT -> '\ue158';
       };
    }
 

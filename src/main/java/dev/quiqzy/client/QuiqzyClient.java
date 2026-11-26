@@ -144,11 +144,11 @@ public final class QuiqzyClient implements ClientModInitializer {
    }
 
    private static void openGui(Minecraft mc) {
-      UiSounds.gui(true);
+      if (!ModuleManager.CLICK_GUI.panels()) UiSounds.gui(true);
       reopenGui(mc);
    }
 
    public static void reopenGui(Minecraft mc) {
-      mc.setScreen(new dev.quiqzy.client.gui.AuroraGui());
+      mc.setScreen(ModuleManager.CLICK_GUI.panels() ? new dev.quiqzy.client.gui.PanelGui() : new dev.quiqzy.client.gui.AuroraGui());
    }
 }

@@ -66,6 +66,17 @@ public final class ZeroRender {
       }
    }
 
+   /** Panel-Glas: Blur mit Vibrancy, Tönung (tint inkl. Alpha), weiches Licht oben (light inkl. Alpha), kein Rand. */
+   public static void panel(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int tint, int light, float opacity) {
+      GpuTextureView blur = ZeroBlur.result();
+      if (blur == null) {
+         rect(g, x1, y1, x2, y2, radius, alpha(tint, opacity));
+      } else {
+         GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
+         shape(g, ZeroPipelines.PANEL, TextureSetup.singleTexture(blur, sampler), x1, y1, x2, y2, 0.0F, radius, 0.0F, opacity, 0.0F, tint, light);
+      }
+   }
+
    /** Schlichtes Milchglas: Blur + graue Tönung (tint inkl. Alpha), ohne Rand/Glanz. Ohne Blur: halbtransparentes Grau. */
    public static void frost(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int tint, float opacity) {
       GpuTextureView blur = ZeroBlur.result();

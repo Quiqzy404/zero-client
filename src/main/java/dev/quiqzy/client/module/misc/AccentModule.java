@@ -54,7 +54,7 @@ public final class AccentModule extends Module {
 	}
 
 	public AccentModule() {
-		super("accent", "Accent Colour", "Recolour the whole client with one click", Category.MISC);
+		super("accent", "Accent Colour", "Recolour the whole client with one click", Category.CLIENT);
 		setEnabled(true);
 	}
 

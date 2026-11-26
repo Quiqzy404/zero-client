@@ -207,6 +207,7 @@ public final class AuroraGui extends Screen {
 			case WORLD -> ZeroFont.Icon.GLOBE;
 			case MISC -> ZeroFont.Icon.SLIDERS;
 			case TIERSMC -> ZeroFont.Icon.MAP_PIN;
+			case CLIENT -> ZeroFont.Icon.SETTINGS;
 		};
 	}
 
@@ -1561,6 +1562,16 @@ public final class AuroraGui extends Screen {
 		ZeroBlur.release();
 		QuiqzyConfig.save();
 		super.removed();
+	}
+
+	/** Öffnet direkt den Listen-Editor (Blöcke/Items/Namen ...) eines Moduls – z.B. aus der Panel-GUI. */
+	public static AuroraGui editor(Screen parent, Module m, Setting<?> s) {
+		AuroraGui gui = new AuroraGui(parent);
+		gui.detail = m;
+		gui.detailA = 1f;
+		gui.editing = s;
+		gui.listQuery = "";
+		return gui;
 	}
 
 	// Selbsttest

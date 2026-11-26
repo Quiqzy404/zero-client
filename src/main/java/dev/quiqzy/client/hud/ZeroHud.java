@@ -73,7 +73,7 @@ public final class ZeroHud {
 	public static void render(GuiGraphics g, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer p = mc.player;
-		if (p == null || mc.level == null || mc.options.hideGui || mc.screen instanceof ZeroGui || mc.screen instanceof dev.quiqzy.client.gui.AuroraGui) return;
+		if (p == null || mc.level == null || mc.options.hideGui || mc.screen instanceof ZeroGui || mc.screen instanceof dev.quiqzy.client.gui.AuroraGui || mc.screen instanceof dev.quiqzy.client.gui.PanelGui) return;
 		editing = mc.screen instanceof HudEditorScreen;
 
 		long now = System.nanoTime();

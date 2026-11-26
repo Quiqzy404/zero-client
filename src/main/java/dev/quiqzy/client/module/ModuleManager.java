@@ -186,6 +186,7 @@ public final class ModuleManager {
    public static final PopCounterModule POP_COUNTER = register(new PopCounterModule());
    public static final ChatTweaksModule CHAT_TWEAKS = register(new ChatTweaksModule());
    public static final AccentModule ACCENT = register(new AccentModule());
+   public static final dev.quiqzy.client.module.misc.ClickGuiModule CLICK_GUI = register(new dev.quiqzy.client.module.misc.ClickGuiModule());
    public static final StatusBarModule STATUS_BAR = register(new StatusBarModule());
    public static final RadarModule RADAR = register(new RadarModule());
    public static final TextReplaceModule TEXT_REPLACE = register(new TextReplaceModule());

@@ -12,7 +12,7 @@ public final class SoundsModule extends Module {
 	public final Setting.Bool clicks = add(new Setting.Bool("clicks", "Settings Clicks", true));
 
 	public SoundsModule() {
-		super("sounds", "Sounds", "Sounds for module toggles and the GUI", Category.MISC);
+		super("sounds", "Sounds", "Sounds for module toggles and the GUI", Category.CLIENT);
 		setEnabled(true);
 	}
 }

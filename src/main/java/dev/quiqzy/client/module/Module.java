@@ -103,7 +103,8 @@ public abstract class Module {
 		PLAYER("Player", "☺"),
 		WORLD("World", "◈"),
 		MISC("Misc", "≡"),
-		TIERSMC("TiersMC", "◆");
+		TIERSMC("TiersMC", "◆"),
+		CLIENT("Client", "⚙");
 
 		public final String label;
 		public final String icon;

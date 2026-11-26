@@ -232,6 +232,7 @@ public final class QuiqzyConfig {
       root.add("modules", modules);
       root.addProperty("guiMode", guiMode);
       root.addProperty("guiBlur", guiBlur);
+      root.addProperty("soundsOffV1", true);
       root.addProperty("gui3d", gui3d);
       return root;
    }
@@ -248,6 +249,7 @@ public final class QuiqzyConfig {
       if (root.has("guiBlur")) {
          guiBlur = root.get("guiBlur").getAsBoolean();
       }
+      final boolean soundsMigrated = root.has("soundsOffV1");
 
       JsonObject modules = root.getAsJsonObject("modules");
       if (modules != null) {
@@ -320,5 +322,7 @@ public final class QuiqzyConfig {
             }
          }
       }
+      // einmalig: GUI-/Toggle-Sounds aus (User fand sie schlecht) – kann im Client-Panel wieder an
+      if (!soundsMigrated) ModuleManager.SOUNDS.setEnabled(false);
    }
 }
