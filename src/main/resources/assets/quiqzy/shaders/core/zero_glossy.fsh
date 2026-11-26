@@ -78,11 +78,16 @@ void main() {
     }
     if (found <= 0.001) {
         // kein Treffer: Himmel/Rand an der Austrittsstelle, schwächer
-        if (lastUv.x < 0.0) discard;
+        if (lastUv.x < 0.0) {
+            // Strahl zeigt hinter die Kamera / aus dem Bild (z.B. unten beim Runterschauen):
+            // Ersatz-Spiegelung = gespiegelter Bildpunkt von oben (Himmel/Horizont), statt nichts.
+            vec2 suv = (gl_FragCoord.xy / vec2(textureSize(Sampler0, 0)));
+            lastUv = vec2(suv.x, clamp(1.0 - suv.y * 0.85, 0.02, 0.98));
+        }
         hitCol = texture(Sampler0, lastUv).rgb;
         found = 0.45;
     }
 
-    float fres = 0.30 + 0.70 * pow(1.0 - ndv, 3.0);
+    float fres = 0.45 + 0.55 * pow(1.0 - ndv, 3.0);
     fragColor = vec4(hitCol, params.x * fres * found * tint.a);
 }

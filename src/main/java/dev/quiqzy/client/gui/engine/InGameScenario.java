@@ -500,6 +500,8 @@ final class InGameScenario {
          });
          step.accept("gf2@10", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "glossy_1.png", mc.getMainRenderTarget(), 1, msg -> {}));
          step.accept("gf3@20", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "glossy_2.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("gf4@5", mc -> mc.player.setXRot(55f));
+         step.accept("gf5@15", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "glossy_down.png", mc.getMainRenderTarget(), 1, msg -> {}));
          step.accept("gf4@6", mc -> {});
          return;
       }
