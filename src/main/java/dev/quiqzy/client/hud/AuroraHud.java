@@ -196,49 +196,83 @@ public final class AuroraHud {
 			if (pi != null) ping = String.valueOf(pi.getLatency());
 		}
 		float s = 7f, h = 20f;
-		// Segmente: {icon, wert, einheit}
+		// Segmente: {icon, wert, einheit, id} – im HUD-Editor einzeln per × ausblendbar
 		List<Object[]> segs = new ArrayList<>();
-		segs.add(new Object[]{null, name, null});
-		segs.add(new Object[]{ZeroFont.Icon.MONITOR, fps, "fps"});
-		if (ping != null) segs.add(new Object[]{ZeroFont.Icon.WIFI, ping, "ms"});
-		segs.add(new Object[]{ZeroFont.Icon.CLOUD, server, null});
-		segs.add(new Object[]{ZeroFont.Icon.CLOCK, clock, null});
+		segs.add(new Object[]{null, name, null, "name"});
+		segs.add(new Object[]{ZeroFont.Icon.MONITOR, fps, "fps", "fps"});
+		if (ping != null) segs.add(new Object[]{ZeroFont.Icon.WIFI, ping, "ms", "ping"});
+		segs.add(new Object[]{ZeroFont.Icon.CLOUD, server, null, "server"});
+		segs.add(new Object[]{ZeroFont.Icon.CLOCK, clock, null, "clock"});
+		segs.removeIf(sg -> ZeroHud.partHidden("a_info:" + sg[3]));
+		if (segs.isEmpty()) return y;
 		float gap = 15f;
 		float total = 0f;
 		for (Object[] sg : segs) total += segW(sg, s) + gap;
 		total -= gap;
 		float x1 = vw / 2f - total / 2f - 10f, x2 = vw / 2f + total / 2f + 10f, y2 = y + h;
+		// passt die Leiste (mit Verschiebung) nicht mehr ins Bild -> hochkant, Teile untereinander
+		float off = ModuleManager.ACCENT.offset("a_info")[0];
+		if (x1 + off < 3f || x2 + off > vw - 3f) return infoVertical(g, p, segs, vw, y, s, off);
 		surface(g, x1, y, x2, y2, h / 2f, 1f);
 		ZeroHud.markExt(x1, y, x2, y2);
 		float x = x1 + 10f, cy = y + h / 2f;
 		for (int i = 0; i < segs.size(); i++) {
 			Object[] sg = segs.get(i);
-			String txt = (String) sg[1];
-			if (sg[0] == null) {
-				// eigener Kopf mit Glasrand
-				if (!Theme.glass()) ZeroRender.rect(g, x - 1f, cy - 6.5f, x + 12f, cy + 6.5f, 3.5f, a(accent(), 0.5f));
-				try {
-					net.minecraft.client.gui.components.PlayerFaceRenderer.draw(g, p.getSkin(), Math.round(x), Math.round(cy - 5.5f), 11);
-				} catch (Throwable ignored) {
-				}
-				x += 15f;
-			} else {
-				ZeroRender.icon(g, (Character) sg[0], x + 4f, cy, 7f, muted());
-				x += 11f;
-			}
-			ZeroRender.text(g, ZeroFont.BOLD, txt, x, cy - 3.6f, s, TEXT);
-			x += w(ZeroFont.BOLD, txt, s);
-			if (sg[2] != null) {
-				x += 1.5f;
-				ZeroRender.text(g, ZeroFont.REGULAR, (String) sg[2], x, cy - 2.2f, 5.2f, faint());
-				x += w(ZeroFont.REGULAR, (String) sg[2], 5.2f);
-			}
+			float sx = x;
+			x = drawSeg(g, p, sg, x, cy, s);
+			ZeroHud.markPart((String) sg[3], sx - 3f, y + 2f, x + 3f, y2 - 2f);
 			if (i < segs.size() - 1) {
 				ZeroRender.circle(g, x + gap / 2f, cy, 0.9f, a(0xFFFFFFFF, 0.28f));
 				x += gap;
 			}
 		}
 		return y2 + 5f;
+	}
+
+	/** Hochkant-Variante: jede Info in einer eigenen Zeile (wenn die Leiste am Rand nicht mehr passt). */
+	private static float infoVertical(GuiGraphics g, LocalPlayer p, List<Object[]> segs, float vw, float y, float s, float off) {
+		float rowH = 16f, maxW = 0f;
+		for (Object[] sg : segs) maxW = Math.max(maxW, segW(sg, s));
+		float wdt = maxW + 20f, hgt = segs.size() * rowH + 6f;
+		float x1 = vw / 2f - wdt / 2f;
+		// im Bild halten
+		if (x1 + off < 3f) x1 = 3f - off;
+		if (x1 + wdt + off > vw - 3f) x1 = vw - 3f - off - wdt;
+		float x2 = x1 + wdt, y2 = y + hgt;
+		surface(g, x1, y, x2, y2, 9f, 1f);
+		ZeroHud.markExt(x1, y, x2, y2);
+		float ry = y + 3f;
+		for (int i = 0; i < segs.size(); i++) {
+			Object[] sg = segs.get(i);
+			drawSeg(g, p, sg, x1 + 10f, ry + rowH / 2f, s);
+			ZeroHud.markPart((String) sg[3], x1 + 3f, ry, x2 - 3f, ry + rowH);
+			if (i < segs.size() - 1) ZeroRender.rect(g, x1 + 9f, ry + rowH - 0.3f, x2 - 9f, ry + rowH + 0.3f, 0f, a(0xFFFFFFFF, 0.10f));
+			ry += rowH;
+		}
+		return y2 + 5f;
+	}
+
+	/** Ein Info-Teil (Icon/Kopf + Wert + Einheit); gibt die x-Position dahinter zurück. */
+	private static float drawSeg(GuiGraphics g, LocalPlayer p, Object[] sg, float x, float cy, float s) {
+		String txt = (String) sg[1];
+		if (sg[0] == null) {
+			try {
+				net.minecraft.client.gui.components.PlayerFaceRenderer.draw(g, p.getSkin(), Math.round(x), Math.round(cy - 5.5f), 11);
+			} catch (Throwable ignored) {
+			}
+			x += 15f;
+		} else {
+			ZeroRender.icon(g, (Character) sg[0], x + 4f, cy, 7f, muted());
+			x += 11f;
+		}
+		ZeroRender.text(g, ZeroFont.BOLD, txt, x, cy - 3.6f, s, TEXT);
+		x += w(ZeroFont.BOLD, txt, s);
+		if (sg[2] != null) {
+			x += 1.5f;
+			ZeroRender.text(g, ZeroFont.REGULAR, (String) sg[2], x, cy - 2.2f, 5.2f, faint());
+			x += w(ZeroFont.REGULAR, (String) sg[2], 5.2f);
+		}
+		return x;
 	}
 
 	private static float segW(Object[] sg, float s) {
@@ -710,11 +744,11 @@ public final class AuroraHud {
 		}
 	}
 
-	/** Schlichtes graues Milchglas (mit Blur, wenn verfügbar) – unabhängig vom Theme. */
+	/** Glas wie überall (neuer Stil). */
 	private static void greySurface(GuiGraphics g, float x1, float y1, float x2, float y2, float r) {
 		boolean prev = ZeroRender.noTint;
 		ZeroRender.noTint = true;
-		ZeroRender.frost(g, x1, y1, x2, y2, r, 0x8C2A2B30, 1f);
+		ZeroRender.panel(g, x1, y1, x2, y2, r, 0x8014161C, 0x14FFFFFF, 1f);
 		ZeroRender.noTint = prev;
 	}
 }

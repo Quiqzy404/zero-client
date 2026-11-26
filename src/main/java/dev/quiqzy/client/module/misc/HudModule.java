@@ -12,6 +12,8 @@ public final class HudModule extends Module {
 	public final Setting.Bool ping = add(new Setting.Bool("ping", "Ping", true));
 	public final Setting.Bool totems = add(new Setting.Bool("totems", "Totem Counter", true));
 	public final Setting.Bool armor = add(new Setting.Bool("armor", "Armor HUD", true));
+	/** Im HUD-Editor per × ausgeblendete Teile (z.B. "a_info:fps"). Rechtsklick auf das Element holt sie zurück. */
+	public final Setting.Strings hiddenParts = add(new Setting.Strings("hidden_parts", "Hidden HUD Parts"));
 
 	public HudModule() {
 		super("hud", "HUD", "Coords, direction, FPS, ping, totems, armor", Category.HUD);

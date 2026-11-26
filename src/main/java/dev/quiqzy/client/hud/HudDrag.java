@@ -39,11 +39,27 @@ public final class HudDrag {
 	/** Klick auf ein HUD-Element: links = ziehen starten, rechts = zurücksetzen. true = verbraucht. */
 	public static boolean click(double guiX, double guiY, int button) {
 		float mx = v(guiX), my = v(guiY);
+		// × an einem Teil (z.B. FPS in der Info-Leiste) -> diesen Teil ausblenden
+		if (button == 0) {
+			String part = hoveredPart(mx, my);
+			if (part != null) {
+				float[] b = ZeroHud.PARTS.get(part);
+				float bx = b[2] - 1f, by = b[1] - 1f;
+				if ((mx - bx) * (mx - bx) + (my - by) * (my - by) <= 5.5f * 5.5f) {
+					ModuleManager.HUD.hiddenParts.get().add(part);
+					QuiqzyConfig.save();
+					return true;
+				}
+			}
+		}
 		for (Map.Entry<String, float[]> e : ZeroHud.BOUNDS.entrySet()) {
 			float[] b = e.getValue();
 			if (mx >= b[0] && mx <= b[2] && my >= b[1] && my <= b[3]) {
 				if (button == 1) {
 					ModuleManager.ACCENT.setOffset(e.getKey(), 0f, 0f);
+					// ausgeblendete Teile dieses Elements zurückholen
+					String pre = e.getKey() + ":";
+					ModuleManager.HUD.hiddenParts.get().removeIf(x -> x.startsWith(pre));
 					QuiqzyConfig.save();
 					UiSounds.removed();
 					return true;
@@ -97,6 +113,15 @@ public final class HudDrag {
 		ModuleManager.ACCENT.setOffset(dragging, nx, ny);
 	}
 
+	/** Teil unter der Maus (oder knapp daneben, damit man das × oben rechts trifft). */
+	private static String hoveredPart(float mx, float my) {
+		for (Map.Entry<String, float[]> e : ZeroHud.PARTS.entrySet()) {
+			float[] b = e.getValue();
+			if (mx >= b[0] && mx <= b[2] + 6f && my >= b[1] - 6f && my <= b[3]) return e.getKey();
+		}
+		return null;
+	}
+
 	/** Ziehen beenden (speichert). */
 	public static void release() {
 		if (dragging != null) {
@@ -118,12 +143,22 @@ public final class HudDrag {
 			ZeroRender.stroke(g, b[0] - 2f, b[1] - 2f, b[2] + 2f, b[3] + 2f, 4f, hot ? 1f : 0.5f, c);
 			if (hot) ZeroRender.text(g, ZeroFont.BOLD, e.getKey().toUpperCase(Locale.ROOT), b[0], b[1] - 9f, 5.6f, 0xFFFFFFFF);
 		}
+		// × am Teil unter der Maus (nicht beim Ziehen)
+		String part = dragging == null ? hoveredPart(mx, my) : null;
+		if (part != null) {
+			float[] b = ZeroHud.PARTS.get(part);
+			ZeroRender.stroke(g, b[0], b[1], b[2], b[3], 3f, 0.6f, 0x99FFFFFF);
+			float bx = b[2] - 1f, by = b[1] - 1f;
+			boolean overX = (mx - bx) * (mx - bx) + (my - by) * (my - by) <= 5.5f * 5.5f;
+			ZeroRender.circle(g, bx, by, 4.6f, overX ? 0xFFFF4A4A : 0xF0202126);
+			ZeroRender.icon(g, ZeroFont.Icon.X, bx, by, 4.4f, 0xFFFFFFFF);
+		}
 		Minecraft mc = Minecraft.getInstance();
 		float vw = v(mc.getWindow().getGuiScaledWidth()), vh = v(mc.getWindow().getGuiScaledHeight());
 		if (!Float.isNaN(guideX)) ZeroRender.rect(g, guideX - 0.4f, 0, guideX + 0.4f, vh, 0f, 0xC0FFFFFF);
 		if (!Float.isNaN(guideY)) ZeroRender.rect(g, 0, guideY - 0.4f, vw, guideY + 0.4f, 0f, 0xC0FFFFFF);
 		if (hint) {
-			String tip = "Drag HUD to move  ·  Right-click = reset";
+			String tip = "Drag HUD to move  ·  × removes a part  ·  Right-click = reset";
 			float tw = ZeroFont.BOLD.width(tip, 6.4f, 0f);
 			ZeroRender.noTint = true;
 			ZeroRender.panel(g, vw / 2f - tw / 2f - 10f, 6f, vw / 2f + tw / 2f + 10f, 21f, 7.5f, 0x9E14161C, 0x14FFFFFF, 1f);

@@ -735,6 +735,22 @@ final class InGameScenario {
          step.accept("ag8@5", mc -> { ModuleManager.ACCENT.preset.set("Violet"); ModuleManager.KILL_AURA.setEnabled(false); ModuleManager.KILL_AURA.setKeybind(-1); ag[0].testSearch(""); mc.setScreen(null); });
          return;
       }
+      if ("hudparts".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
+         step.accept("hp0@25", mc -> {
+            mc.setScreen(null);
+            ModuleManager.HUD.setEnabled(true);
+            ModuleManager.KEYSTROKES.setEnabled(true);
+            ModuleManager.HUD.hiddenParts.get().clear();
+            ModuleManager.ACCENT.setOffset("a_info", 0f, 0f);
+         });
+         step.accept("hp1@20", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "hud_full.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("hp2@5", mc -> ModuleManager.HUD.hiddenParts.get().add("a_info:fps"));
+         step.accept("hp3@15", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "hud_nofps.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("hp4@5", mc -> ModuleManager.ACCENT.setOffset("a_info", -420f, 60f));
+         step.accept("hp5@15", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "hud_edge.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("hp6@5", mc -> { ModuleManager.HUD.hiddenParts.get().clear(); ModuleManager.ACCENT.setOffset("a_info", 0f, 0f); });
+         return;
+      }
       if ("dock".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
          final dev.quiqzy.client.gui.DockGui[] dg = new dev.quiqzy.client.gui.DockGui[1];
          step.accept("dk0@25", mc -> {

@@ -92,6 +92,7 @@ public final class ZeroHud {
 		lastK = k;
 		lastScale = hs;
 		BOUNDS.clear();
+		PARTS.clear();
 
 		g.pose().pushMatrix();
 		g.pose().scale(hs / k);
@@ -180,6 +181,18 @@ public final class ZeroHud {
 
 	/** Zuletzt gezeichnete Rahmen der Elemente (virtuelle Koordinaten, inkl. Verschiebung). */
 	public static final Map<String, float[]> BOUNDS = new java.util.LinkedHashMap<>();
+	/** Einzelne Teile eines HUD-Elements ("a_info:fps" -> Bereich), im HUD-Editor per × entfernbar. */
+	public static final Map<String, float[]> PARTS = new java.util.LinkedHashMap<>();
+
+	static void markPart(String part, float x1, float y1, float x2, float y2) {
+		if (curId == null) return;
+		PARTS.put(curId + ":" + part, new float[]{x1 + curOff[0], y1 + curOff[1], x2 + curOff[0], y2 + curOff[1]});
+	}
+
+	/** Ist dieser Teil vom Spieler ausgeblendet? (Liste in HUD -> Hidden HUD Parts) */
+	public static boolean partHidden(String fullId) {
+		return ModuleManager.HUD.hiddenParts.get().contains(fullId);
+	}
 	public static float lastK = 1f, lastScale = 1f;
 	public static boolean editing;
 	private static String curId;
@@ -252,7 +265,7 @@ public final class ZeroHud {
 	 * und duennen hellgrauen Haarlinien – Krispy-Look, kein warmes Braun mehr.
 	 */
 	private static void glass(GuiGraphics g, float x1, float y1, float x2, float y2, float r, float a) {
-		if (AuroraHud.active()) {
+		if (true) { // neuer Stil: immer Glas (wie Menü), egal welcher HUD-Style
 			AuroraHud.surface(g, x1, y1, x2, y2, r, a);
 			return;
 		}
@@ -2228,8 +2241,7 @@ public final class ZeroHud {
 		float sy = y + (s + gap) * 2 + 24f + gap + 2f;
 		float sw = full * (0.55f + 0.1f * d);
 		float sx = x + (full - sw) / 2f;
-		if (d > 0.01f) ZeroRender.glow(g, sx, sy, sx + sw, sy + 3f, 1.5f, 5f, ZeroRender.alpha(flow(0f), 0.5f * d));
-		ZeroRender.rect(g, sx, sy, sx + sw, sy + 3f, 1.5f, ZeroRender.lerp(0x50FFFFFF, flow(0f), d));
+		ZeroRender.rect(g, sx, sy, sx + sw, sy + 3f, 1.5f, ZeroRender.lerp(0x50FFFFFF, 0xF0FFFFFF, d));
 		Boolean was = KEY_WAS.put(o.keyJump, sp);
 		if (sp && (was == null || !was)) dev.quiqzy.client.util.UiSounds.key(false);
 		mark(x, y, x + full, sy + 3f);
@@ -2241,12 +2253,8 @@ public final class ZeroHud {
 		Boolean was = KEY_WAS.put(k, down);
 		if (down && (was == null || !was)) dev.quiqzy.client.util.UiSounds.key(true);
 		float d = anim(k, down ? 1f : 0f, 22f);
-		if (d > 0.01f) {
-			ZeroRender.glow(g, x, y, x + w, y + h, 7f, 7f, ZeroRender.alpha(flow(0f), 0.45f * d));
-			ZeroRender.gradient(g, x, y, x + w, y + h, 7f, ZeroRender.alpha(acc(), d), ZeroRender.alpha(acc2(), d), 35f);
-		} else {
-			glass(g, x, y, x + w, y + h, 7f, 1f);
-		}
+		glass(g, x, y, x + w, y + h, 7f, 1f);
+		if (d > 0.01f) AuroraHud.lens(g, x, y, x + w, y + h, 7f, d);
 		int tc = ZeroRender.lerp(TEXT, 0xFF1C1526, d);
 		ZeroRender.textCentered(g, ZeroFont.BOLD, label, x + w / 2f, y + 4.5f, 8f, tc);
 		ZeroRender.textCentered(g, ZeroFont.BOLD, cps + " CPS", x + w / 2f, y + 14.5f, 5.2f, ZeroRender.lerp(MUTED, 0xFF2C2544, d));
@@ -2277,12 +2285,10 @@ public final class ZeroHud {
 		float d = anim(k, down ? 1f : 0f, 22f);
 		mark(x, y, x + w, y + h);
 		// nicht gedrückt: nur weicher Schatten hinter dem Buchstaben; gedrückt: Akzent-Kachel springt rein
+		glass(g, x, y, x + w, y + h, 7f, 1f);
 		if (d > 0.01f) {
-			float in = 1.5f * (1f - d);
-			ZeroRender.glow(g, x + in, y + in, x + w - in, y + h - in, 7f, 7f, ZeroRender.alpha(flow(0f), 0.45f * d));
-			ZeroRender.gradient(g, x + in, y + in, x + w - in, y + h - in, 7f, ZeroRender.alpha(acc(), d), ZeroRender.alpha(acc2(), d), 35f);
-		} else {
-			glass(g, x, y, x + w, y + h, 7f, 1f);
+			float in = 1.2f * (1f - d);
+			AuroraHud.lens(g, x + in, y + in, x + w - in, y + h - in, 7f, d);
 		}
 		float size = 10f;
 		ZeroRender.textCentered(g, ZeroFont.BOLD, label, x + w / 2f, y + h / 2f - size * 0.46f, size, ZeroRender.lerp(TEXT, 0xFF1C1526, d));
