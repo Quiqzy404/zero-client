@@ -735,6 +735,22 @@ final class InGameScenario {
          step.accept("ag8@5", mc -> { ModuleManager.ACCENT.preset.set("Violet"); ModuleManager.KILL_AURA.setEnabled(false); ModuleManager.KILL_AURA.setKeybind(-1); ag[0].testSearch(""); mc.setScreen(null); });
          return;
       }
+      if ("radial".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
+         final dev.quiqzy.client.gui.RadialGui[] rg = new dev.quiqzy.client.gui.RadialGui[1];
+         step.accept("rg0@25", mc -> {
+            mc.setScreen(null);
+            ModuleManager.CLICK_GUI.style.set("Radial");
+            ModuleManager.CLICK_GUI.bgBlur.set(false);
+            IntegratedServer server = mc.getSingleplayerServer();
+            server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "time set 1000"));
+         });
+         step.accept("rg1@5", mc -> { rg[0] = new dev.quiqzy.client.gui.RadialGui(); rg[0].testSelect(-1); mc.setScreen(rg[0]); });
+         step.accept("rg2@25", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "radial_main.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("rg3@5", mc -> { rg[0].testSelect(0); rg[0].testExpand(ModuleManager.STUN_SLAM); });
+         step.accept("rg4@25", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "radial_open.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("rg5@5", mc -> { rg[0].testSelect(-1); mc.setScreen(null); });
+         return;
+      }
       if ("hudparts".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
          step.accept("hp0@25", mc -> {
             mc.setScreen(null);

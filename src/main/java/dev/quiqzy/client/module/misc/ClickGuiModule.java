@@ -9,7 +9,7 @@ import dev.quiqzy.client.module.Setting;
  */
 public final class ClickGuiModule extends Module {
 
-	public final Setting.Choice style = add(new Setting.Choice("style_v3", "GUI Style", "Panels", "Panels", "Classic"));
+	public final Setting.Choice style = add(new Setting.Choice("style_v4", "GUI Style", "Radial", "Radial", "Panels", "Classic"));
 	public final Setting.Int scale = add(new Setting.Int("scale", "GUI Scale", 100, 60, 160, "%"));
 	public final Setting.Int panelOpacity = add(new Setting.Int("panel_opacity", "Panel Opacity", 45, 0, 100, "%"));
 	public final Setting.Int blurStrength = add(new Setting.Int("blur_strength", "Glass Blur", 2, 1, 4));
@@ -34,11 +34,12 @@ public final class ClickGuiModule extends Module {
 	public net.minecraft.client.gui.screens.Screen create(net.minecraft.client.gui.screens.Screen parent) {
 		return switch (style.get()) {
 			case "Classic" -> new dev.quiqzy.client.gui.AuroraGui(parent);
-			default -> new dev.quiqzy.client.gui.PanelGui(parent);
+			case "Panels" -> new dev.quiqzy.client.gui.PanelGui(parent);
+			default -> new dev.quiqzy.client.gui.RadialGui(parent);
 		};
 	}
 
 	public static boolean isMenu(net.minecraft.client.gui.screens.Screen s) {
-		return s instanceof dev.quiqzy.client.gui.PanelGui || s instanceof dev.quiqzy.client.gui.AuroraGui;
+		return s instanceof dev.quiqzy.client.gui.PanelGui || s instanceof dev.quiqzy.client.gui.RadialGui || s instanceof dev.quiqzy.client.gui.AuroraGui;
 	}
 }

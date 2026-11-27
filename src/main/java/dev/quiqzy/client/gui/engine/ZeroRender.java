@@ -66,6 +66,20 @@ public final class ZeroRender {
       }
    }
 
+   /**
+    * Ring-Segment aus Glas (Radial-GUI). Winkel in Grad, 0 = rechts, im Uhrzeigersinn.
+    * gap = Lücke zum Nachbarn (Pixel), corner = Eckenradius. Ohne Blur: nur getönt.
+    */
+   public static void sector(GuiGraphics g, float cx, float cy, float innerR, float outerR, float startDeg, float sweepDeg,
+         float gap, float corner, int tint, int light, float opacity) {
+      GpuTextureView blur = ZeroBlur.result();
+      TextureSetup tex = blur == null ? TextureSetup.noTexture()
+            : TextureSetup.singleTexture(blur, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+      if (blur == null) return;
+      shape(g, ZeroPipelines.SECTOR, tex, cx - outerR, cy - outerR, cx + outerR, cy + outerR, 0.0F, corner, 0.0F, opacity, gap * 0.5F,
+            tint, light, innerR, (float) Math.toRadians(startDeg), (float) Math.toRadians(sweepDeg), outerR);
+   }
+
    /** Panel-Glas: Blur mit Vibrancy, Tönung (tint inkl. Alpha), weiches Licht oben (light inkl. Alpha), kein Rand. */
    public static void panel(GuiGraphics g, float x1, float y1, float x2, float y2, float radius, int tint, int light, float opacity) {
       GpuTextureView blur = ZeroBlur.result();
