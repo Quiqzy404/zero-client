@@ -77,7 +77,7 @@ public final class UiSounds {
 	/** Creamy Keys: mechanischer Tastenklang (eigene Lautstärke, unabhängig vom Sounds-Modul). */
 	public static void key(boolean mouse) {
 		var k = ModuleManager.KEYSTROKES;
-		if (!k.isEnabled() || !k.keySounds.on() || broken) return;
+		if (!k.isEnabled() || !k.keySounds.on() || broken || !ModuleManager.SOUNDS.isEnabled()) return;
 		float vol = k.keyVolume.get() / 100f;
 		if (vol <= 0f) return;
 		String name = mouse ? "mouse" : "key" + (int) (Math.random() * 3);
@@ -107,6 +107,7 @@ public final class UiSounds {
 	}
 
 	private static void route(String name) {
+		if (!ModuleManager.SOUNDS.isEnabled()) return; // Hauptschalter: aus = keine ZERO-Sounds (auch Treffer/Kill)
 		float vol = ModuleManager.SOUNDS.volume.get() / 100f;
 		if (vol <= 0f || broken) return;
 		String key = ModuleManager.SOUNDS.style.get() + ":" + name;

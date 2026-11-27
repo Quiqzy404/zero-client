@@ -469,7 +469,7 @@ public final class PanelGui extends Screen {
 			ZeroRender.text(g, ZeroFont.REGULAR, name, lx, y + 3.6f, 5.6f, label);
 			ZeroRender.textRight(g, ZeroFont.REGULAR, sub + "  Edit", rx, y + 3.6f, 5.6f, value);
 			clickIn(x1, y, x2, y + SROW, clipTop, clipBot, () -> {
-				this.minecraft.setScreen(AuroraGui.editor(this, m, s));
+				this.minecraft.setScreen(new ListEditorGui(this, m, s));
 			}, null);
 		}
 		return y + SROW;

@@ -735,6 +735,13 @@ final class InGameScenario {
          step.accept("ag8@5", mc -> { ModuleManager.ACCENT.preset.set("Violet"); ModuleManager.KILL_AURA.setEnabled(false); ModuleManager.KILL_AURA.setKeybind(-1); ag[0].testSearch(""); mc.setScreen(null); });
          return;
       }
+      if ("listedit".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
+         step.accept("le0@25", mc -> mc.setScreen(null));
+         step.accept("le1@5", mc -> mc.setScreen(new dev.quiqzy.client.gui.ListEditorGui(null, ModuleManager.BLOCK_ESP, ModuleManager.BLOCK_ESP.blocks)));
+         step.accept("le2@20", mc -> net.minecraft.client.Screenshot.grab(new java.io.File(mc.gameDirectory.getPath()), "listedit.png", mc.getMainRenderTarget(), 1, msg -> {}));
+         step.accept("le3@5", mc -> mc.setScreen(null));
+         return;
+      }
       if ("radial".equals(System.getenv("ZERO_SELFTEST_ONLY"))) {
          final dev.quiqzy.client.gui.RadialGui[] rg = new dev.quiqzy.client.gui.RadialGui[1];
          step.accept("rg0@25", mc -> {

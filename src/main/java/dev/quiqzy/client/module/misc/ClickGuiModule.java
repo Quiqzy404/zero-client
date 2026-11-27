@@ -40,6 +40,7 @@ public final class ClickGuiModule extends Module {
 	}
 
 	public static boolean isMenu(net.minecraft.client.gui.screens.Screen s) {
-		return s instanceof dev.quiqzy.client.gui.PanelGui || s instanceof dev.quiqzy.client.gui.RadialGui || s instanceof dev.quiqzy.client.gui.AuroraGui;
+		return s instanceof dev.quiqzy.client.gui.PanelGui || s instanceof dev.quiqzy.client.gui.RadialGui || s instanceof dev.quiqzy.client.gui.AuroraGui
+				|| s instanceof dev.quiqzy.client.gui.ListEditorGui;
 	}
 }
