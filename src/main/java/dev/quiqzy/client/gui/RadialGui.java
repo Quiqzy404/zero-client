@@ -265,12 +265,6 @@ public final class RadialGui extends Screen {
 	private void centre(GuiGraphics g, float cx, float cy, float al) {
 		float r = INNER - 9f;
 		ZeroRender.panel(g, cx - r, cy - r, cx + r, cy + r, r, a(0xFF14161C, 0.35f), a(0xFFFFFFFF, 0.10f), al);
-		// Glow um den Kopf (wie beim NoRisk-Skin): weicher heller Schein + breiter farbiger Hof
-		float hs = (INNER - 12f) * HEAD_SCALE * 0.5f; // Kopfgröße (0,5 Blöcke)
-		float pulse = 0.85f + 0.15f * (float) Math.sin(time * 2.0f);
-		int acc = cfg().accentRows.on() ? accent() : 0xFFFFFFFF;
-		ZeroRender.glow(g, cx - hs * 0.62f, cy - hs * 0.62f, cx + hs * 0.62f, cy + hs * 0.62f, hs * 0.18f, hs * 0.9f, a(acc, 0.32f * pulse * al));
-		ZeroRender.glow(g, cx - hs * 0.52f, cy - hs * 0.52f, cx + hs * 0.52f, cy + hs * 0.52f, hs * 0.12f, hs * 0.35f, a(0xFFFFFFFF, 0.85f * pulse * al));
 		int hv = hoveredSegment(cx, cy);
 		String label = hv >= 0 ? groups.get(hv).name() : selected >= 0 ? groups.get(selected).name() : "ZERO";
 		float lw = w(ZeroFont.BOLD, label, 6.4f) + 16f;
@@ -286,12 +280,12 @@ public final class RadialGui extends Screen {
 		// Kasten endet knapp unter dem Kinn -> nur der Kopf ist zu sehen. Weil die Figur in der Kastenmitte
 		// steht, wird der Versatz so korrigiert, dass der Kopf trotzdem genau in der Kreismitte sitzt.
 		float half = s * 0.25f; // halbe Kopfhöhe in Pixeln (Kopf = 0,5 Blöcke)
-		float top = cy - r, bottom = cy + half * 0.98f;
+		float top = cy - r, bottom = cy + half * 0.90f;
 		float boxMid = (top + bottom) / 2f;
 		float yOff = 0.75f + (cy - boxMid) / s;
 		try {
 			net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
-					g, Math.round(cx - r), Math.round(top), Math.round(cx + r), Math.round(bottom),
+					g, Math.round(cx - half * 1.45f), Math.round(top), Math.round(cx + half * 1.45f), Math.round(bottom),
 					s, yOff, mouseX, mouseY, this.minecraft.player);
 		} catch (Throwable ignored) {
 		}
