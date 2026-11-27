@@ -115,11 +115,11 @@ public final class ListEditorGui extends Screen {
 	}
 
 	private static int muted() {
-		return Theme.hsv(hue(), 0.15f, 0.78f, 1f);
+		return 0xC8FFFFFF;
 	}
 
 	private static int faint() {
-		return Theme.hsv(hue(), 0.2f, 0.55f, 1f);
+		return 0x80FFFFFF;
 	}
 
 	private static float w(ZeroFont f, String s, float size) {
@@ -225,7 +225,7 @@ public final class ListEditorGui extends Screen {
 	private void pill(GuiGraphics g, String label, char ic, float x2, float y, float al, Runnable act) {
 		float bw = w(ZeroFont.BOLD, label, 6.2f) + 24f, x1 = x2 - bw;
 		boolean hv = hot(x1, y, x2, y + 16f);
-		ZeroRender.rect(g, x1, y, x2, y + 16f, 8f, a(0xFFFFFFFF, (hv ? 0.16f : 0.08f) * al));
+		ZeroRender.panel(g, x1, y, x2, y + 16f, 8f, hv ? a(0xFFFFFFFF, 0.30f) : a(0xFF14161C, 0.45f), 0x10FFFFFF, al);
 		ZeroRender.icon(g, ic, x1 + 10f, y + 8f, 6.5f, a(hv ? text() : muted(), al));
 		ZeroRender.text(g, ZeroFont.BOLD, label, x1 + 17f, y + 4.8f, 6.2f, a(text(), al));
 		click(x1, y, x2, y + 16f, act);
@@ -265,7 +265,7 @@ public final class ListEditorGui extends Screen {
 		var esp = ModuleManager.BLOCK_ESP;
 		int cur = esp.colorFor(id);
 		float h = 66f;
-		ZeroRender.rect(g, x1, y, x2, y + h, 9f, a(0xFFFFFFFF, 0.06f * al));
+		ZeroRender.panel(g, x1, y, x2, y + h, 10f, a(0xFF14161C, 0.50f), 0x10FFFFFF, al);
 		if (en != null) item(g, en.stack(), x1 + 8f, y + 6f, 16f);
 		String nm = en != null ? en.name() : id;
 		ZeroRender.text(g, ZeroFont.BOLD, nm, x1 + 30f, y + 7f, 7f, a(text(), al));
@@ -338,7 +338,7 @@ public final class ListEditorGui extends Screen {
 		} else {
 			// Suchfeld / Eingabe (einfach tippen)
 			float fx1 = gx2 - 180f;
-			ZeroRender.rect(g, fx1, top, fieldX2, top + 16f, 8f, a(0xFFFFFFFF, 0.08f * al));
+			ZeroRender.panel(g, fx1, top, fieldX2, top + 16f, 8f, a(0xFF14161C, 0.45f), 0x0AFFFFFF, al);
 			ZeroRender.icon(g, strings ? ZeroFont.Icon.PLUS : ZeroFont.Icon.SEARCH, fx1 + 10f, top + 8f, 6.5f, a(muted(), al));
 			String ph = strings ? "Type or paste (Ctrl+V), Enter to add" : "Type to search";
 			String tail = listQuery.length() > 36 ? "…" + listQuery.substring(listQuery.length() - 36) : listQuery;
@@ -357,7 +357,7 @@ public final class ListEditorGui extends Screen {
 		if (blocks || items) {
 			List<String> sel = blocks ? ((Setting.Blocks) s).get() : ((Setting.Items) s).get();
 			List<Entry> all = entries(blocks);
-			float tile = 26f, gap = 5f;
+			float tile = 30f, gap = 6f;
 			int cols = Math.max(1, (int) ((gx2 - gx1 + gap) / (tile + gap)));
 			// Ausgewählte
 			ZeroRender.text(g, ZeroFont.BOLD, "SELECTED  " + sel.size(), gx1, y, 5.8f, a(faint(), al));
@@ -368,8 +368,8 @@ public final class ListEditorGui extends Screen {
 				for (Entry e2 : all) if (e2.id().equals(id)) { en = e2; break; }
 				float tx = gx1 + (i % cols) * (tile + gap), ty = y + (i / cols) * (tile + gap);
 				boolean hv = inView && hot(tx, ty, tx + tile, ty + tile);
-				ZeroRender.rect(g, tx, ty, tx + tile, ty + tile, 7f, a(0xFFFFFFFF, (hv ? 0.20f : 0.12f) * al));
-				if (en != null) item(g, en.stack(), tx + 5f, ty + 5f, 16f);
+				ZeroRender.panel(g, tx, ty, tx + tile, ty + tile, 9f, a(0xFFFFFFFF, hv ? 0.60f : 0.45f), 0x14FFFFFF, al);
+				if (en != null) item(g, en.stack(), tx + 6f, ty + 6f, 18f);
 				boolean espColors = blocks && s == ModuleManager.BLOCK_ESP.blocks;
 				if (espColors) {
 					// Farbpunkt unten rechts = aktuelle ESP-Farbe dieses Blocks
@@ -380,12 +380,12 @@ public final class ListEditorGui extends Screen {
 					if (id.equals(colorTarget)) ZeroRender.stroke(g, tx, ty, tx + tile, ty + tile, 7f, 1f, a(0xFFFFFFFF, 0.8f * al));
 				}
 				if (hv) {
-					ZeroRender.rect(g, tx, ty, tx + tile, ty + tile, 7f, a(0xFF000000, 0.45f * al));
+					ZeroRender.panel(g, tx, ty, tx + tile, ty + tile, 9f, a(0xFF141418, 0.70f), 0x00FFFFFF, al);
 					ZeroRender.icon(g, ZeroFont.Icon.X, tx + tile / 2f, ty + tile / 2f, 9f, a(text(), al));
 					if (espColors) {
 						String tip = "Right-click: color";
 						float tw = w(ZeroFont.REGULAR, tip, 5.8f) + 12f, tipx = Math.min(tx, gx2 - tw);
-						ZeroRender.rect(g, tipx, ty - 14f, tipx + tw, ty - 2f, 6f, a(0xF0202125, al));
+						ZeroRender.rect(g, tipx, ty - 14f, tipx + tw, ty - 2f, 6f, a(0xE614161C, al));
 						ZeroRender.text(g, ZeroFont.REGULAR, tip, tipx + 6f, ty - 11f, 5.8f, a(text(), al));
 					}
 				}
@@ -427,13 +427,13 @@ public final class ListEditorGui extends Screen {
 				float tx = gx1 + (k % cols) * (tile + gap), ty = y + (k / cols) * (tile + gap);
 				if (ty > bottom || ty + tile < ctop - 2f) continue;
 				boolean hv = inView && hot(tx, ty, tx + tile, ty + tile);
-				ZeroRender.rect(g, tx, ty, tx + tile, ty + tile, 7f, a(0xFFFFFFFF, (hv ? 0.14f : 0.05f) * al));
-				item(g, en.stack(), tx + 5f, ty + 5f, 16f);
+				ZeroRender.panel(g, tx, ty, tx + tile, ty + tile, 9f, a(0xFF14161C, hv ? 0.25f : 0.45f), 0x0CFFFFFF, al);
+				item(g, en.stack(), tx + 6f, ty + 6f, 18f);
 				if (hv) {
 					String nm = en.name();
 					float nw = w(ZeroFont.BOLD, nm, 6f) + 12f;
 					float nx = Math.min(tx, gx2 - nw);
-					ZeroRender.rect(g, nx, ty - 14f, nx + nw, ty - 2f, 6f, a(0xF0202125, al));
+					ZeroRender.rect(g, nx, ty - 14f, nx + nw, ty - 2f, 6f, a(0xE614161C, al));
 					ZeroRender.text(g, ZeroFont.BOLD, nm, nx + 6f, ty - 11f, 6f, a(text(), al));
 				}
 				if (inView) click(tx, ty, tx + tile, ty + tile, () -> {
@@ -454,7 +454,7 @@ public final class ListEditorGui extends Screen {
 				String v = list.get(i);
 				int idx = i;
 				boolean hv = inView && hot(gx1, y, gx2, y + 20f);
-				ZeroRender.rect(g, gx1, y, gx2, y + 18f, 8f, a(0xFFFFFFFF, (hv ? 0.09f : 0.05f) * al));
+				ZeroRender.panel(g, gx1, y, gx2, y + 18f, 8f, a(0xFF14161C, hv ? 0.30f : 0.45f), 0x0AFFFFFF, al);
 				ZeroRender.text(g, ZeroFont.BOLD, v, gx1 + 10f, y + 5.5f, 7f, a(text(), al));
 				boolean th = inView && hot(gx2 - 20f, y, gx2, y + 18f);
 				ZeroRender.icon(g, ZeroFont.Icon.TRASH, gx2 - 10f, y + 9f, 7.5f, a(th ? 0xFFFF6B6B : muted(), al));
@@ -479,7 +479,7 @@ public final class ListEditorGui extends Screen {
 				int idx = i;
 				int rgb = dev.quiqzy.client.module.world.WaypointsModule.colorOf(p.name());
 				boolean hv = inView && hot(gx1, y, gx2, y + 20f);
-				ZeroRender.rect(g, gx1, y, gx2, y + 18f, 8f, a(0xFFFFFFFF, (hv ? 0.09f : 0.05f) * al));
+				ZeroRender.panel(g, gx1, y, gx2, y + 18f, 8f, a(0xFF14161C, hv ? 0.30f : 0.45f), 0x0AFFFFFF, al);
 				ZeroRender.noTint = true;
 				ZeroRender.circle(g, gx1 + 10f, y + 9f, 3f, a(0xFF000000 | rgb, al));
 				ZeroRender.noTint = false;
