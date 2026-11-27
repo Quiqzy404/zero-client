@@ -272,22 +272,49 @@ public final class RadialGui extends Screen {
 		ZeroRender.textCentered(g, ZeroFont.BOLD, label, cx, cy + OUTER + 20f, 6.4f, a(0xFFFFFFFF, al));
 	}
 
-	/** 3D-Kopf in der Mitte, dreht sich zur Maus (Screen-Koordinaten). */
+	private static net.minecraft.client.model.player.PlayerModel headWide, headSlim;
+	private static boolean headWarned, headLogged;
+	private static final float HEAD_UP = 1.85f;
+	private static final float HEAD_PIVOT = -HEAD_UP;
+
+	/** Eigenes Spieler-Modell, bei dem nur Kopf + Kopfbedeckung sichtbar sind (kein Körper, kein Name-Tag). */
+	private net.minecraft.client.model.player.PlayerModel headModel(boolean slim) {
+		if (headWide == null) {
+			var set = this.minecraft.getEntityModels();
+			headWide = new net.minecraft.client.model.player.PlayerModel(set.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER), false);
+			headSlim = new net.minecraft.client.model.player.PlayerModel(set.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER_SLIM), true);
+		}
+		var m = slim ? headSlim : headWide;
+		m.setAllVisible(false);
+		m.head.visible = true;
+		m.hat.visible = true;
+		return m;
+	}
+
+	/** 3D-Kopf in der Mitte, dreht sich weich zur Maus (Screen-Koordinaten). Liegt über der GUI, nichts wird abgeschnitten. */
 	private void head(GuiGraphics g, float cx, float cy, int mouseX, int mouseY) {
 		if (this.minecraft.player == null) return;
-		float r = (INNER - 12f) / k;
-		int s = Math.max(8, Math.round(r * HEAD_SCALE));
-		// Kasten endet knapp unter dem Kinn -> nur der Kopf ist zu sehen. Weil die Figur in der Kastenmitte
-		// steht, wird der Versatz so korrigiert, dass der Kopf trotzdem genau in der Kreismitte sitzt.
-		float half = s * 0.25f; // halbe Kopfhöhe in Pixeln (Kopf = 0,5 Blöcke)
-		float top = cy - r, bottom = cy + half * 0.90f;
-		float boxMid = (top + bottom) / 2f;
-		float yOff = 0.75f + (cy - boxMid) / s;
+		float r = (INNER - 6f) / k;
 		try {
-			net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
-					g, Math.round(cx - half * 1.45f), Math.round(top), Math.round(cx + half * 1.45f), Math.round(bottom),
-					s, yOff, mouseX, mouseY, this.minecraft.player);
-		} catch (Throwable ignored) {
+			var skin = this.minecraft.player.getSkin();
+			boolean slim = skin.model() == net.minecraft.world.entity.player.PlayerModelType.SLIM;
+			var model = headModel(slim);
+			// Blickrichtung zur Maus (weich nachgezogen)
+			float yaw = (float) Math.toDegrees(Math.atan((mouseX - cx) / 60f)) * 0.9f;
+			float pitch = (float) Math.toDegrees(Math.atan((mouseY - cy) / 60f)) * 0.7f;
+			float ry = an("headYaw", yaw, 9f), rx = an("headPitch", pitch, 9f);
+			float scale = r * 2f * 0.40f / 0.5f; // Kopf (0,5 Blöcke) = 40 % des Kreises
+			if (System.getenv("ZERO_HEAD_TILT") != null) { rx = 25f; ry = 40f; }
+			// Vanilla: Modell-Ursprung = Unterkante des Kastens (Füße), Kopfmitte liegt HEAD_UP Blöcke darüber.
+			// -> Unterkante so legen, dass die Kopfmitte genau in der Kreismitte sitzt; oben genug Luft zum Drehen.
+			int bottom = Math.round(cy + HEAD_UP * scale);
+			g.submitSkinRenderState(model, skin.body().texturePath(), scale, -rx, ry, HEAD_PIVOT,
+					Math.round(cx - r), Math.round(cy - r), Math.round(cx + r), bottom);
+		} catch (Throwable t) {
+			if (!headWarned) {
+				headWarned = true;
+				QuiqzyClient.LOGGER.warn("ZERO radial head failed", t);
+			}
 		}
 	}
 
